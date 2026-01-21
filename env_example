@@ -4,7 +4,7 @@ WHATSAPP_ACCESS_TOKEN=your_token
 WHATSAPP_VERIFY_TOKEN=your_secret
 
 # Gemini
-GEMINI_API_KEY=your_gemini_key
+GEMINI_API_KEY=AIzaSyAOjG6VB7Hm94evKh03bPlqU7SWqcXDWwM
 
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017

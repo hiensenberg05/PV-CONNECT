@@ -255,3 +255,11 @@ Thumbs.db
 test_import.py
 *.pyc
 __pycache__/
+
+# User requested specific ignores
+node_modules/
+*.pdf
+*.PDF
+*.docx
+*.xlsx
+.env*

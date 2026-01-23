@@ -1,23 +1,47 @@
-from app.services.gemini_service import get_model
-from app.agents.state import CaseState
+from app.services.gemini_service import triage_case
+from app.services.mongodb_service import search_drugs
+from app.agents.state import GraphState
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-async def triage_case_node(state: CaseState) -> CaseState:
+async def triage_case_node(state: GraphState) -> GraphState:
     """
-    Classifies case urgency and regular vs unusual effects to guide escalation.
+    Clinical triage - categorize risk level using LLM-assisted analysis
+    NOT diagnosis - only risk categorization
     """
-    model = get_model("gemini-2.0-flash-thinking-exp-01-21")
-    drug = state.get("extracted_data", {}).get("drug_name")
-    symptoms = state.get("extracted_data", {}).get("symptoms", [])
-    severity = state.get("extracted_data", {}).get("severity")
-
-    prompt = f"""
-    Evaluate pharmacovigilance case for triage.
-    Drug: {drug}
-    Symptoms: {symptoms}
-    Severity: {severity}
-    Return JSON: {{"priority": "low|medium|high", "is_unusual": true/false, "reason": ""}}
-    """
-    response = model.generate_content(prompt)
-    state["triage"] = response.text.strip()
+    extracted_data = state.get("extracted_data", {})
+    drug_name = extracted_data.get("drug_name")
+    
+    # Fetch known side effects from database (if available)
+    known_effects = None
+    if drug_name:
+        drug_profile = await search_drugs(drug_name)
+        if drug_profile:
+            known_effects = {
+                "known_side_effects": drug_profile.get("known_side_effects", []),
+                "drug_name": drug_profile.get("drug_name"),
+                "approved_countries": drug_profile.get("approved_countries", [])
+            }
+            logger.info(f"Found existing drug profile for {drug_name}")
+        else:
+            logger.warning(f"No drug profile found for {drug_name}")
+    
+    try:
+        triage_result = await triage_case(extracted_data, known_effects)
+        
+        state["risk_level"] = triage_result.get("risk_level", "medium")
+        state["triage_reason"] = triage_result.get("reason", "No reason provided")
+        state["requires_human_review"] = triage_result.get("requires_human_review", False)
+        
+        logger.info(f"Triage result: risk={state['risk_level']}, review={state['requires_human_review']}")
+        
+    except Exception as e:
+        logger.error(f"Triage error: {e}")
+        # Default to medium risk on error
+        state["risk_level"] = "medium"
+        state["triage_reason"] = "Error in triage analysis"
+        state["requires_human_review"] = True
+    
     return state

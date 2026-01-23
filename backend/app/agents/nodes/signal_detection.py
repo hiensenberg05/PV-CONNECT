@@ -4,7 +4,6 @@ import json
 from app.services.mongodb_service import get_db
 from app.services.rag_service import find_similar_cases
 from app.services.gemini_service import get_model
-from app.api.websockets import manager
 
 
 async def detect_signals():
@@ -34,7 +33,7 @@ async def detect_signals():
     ]
 
     signals = list(db.cases.aggregate(pipeline))
-    model = get_model("gemini-2.0-flash-thinking-exp-01-21")
+    model = get_model("gemini-2.5-flash")
 
     for signal in signals:
         query = f"Drug: {signal['_id']['drug']}, Symptom: {signal['_id']['symptom']}"
@@ -63,4 +62,6 @@ async def detect_signals():
             }
         )
 
+        # Import manager here to avoid circular import
+        from app.api.websockets import manager
         await manager.broadcast({"type": "new_signal", "data": analysis})

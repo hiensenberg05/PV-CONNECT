@@ -1,0 +1,1602 @@
+[
+  {
+    "doctor_id": "doc_0001",
+    "name": "Dr. Kiran Bansal",
+    "phone_number": "+910123865127",
+    "license_number": "MCI-368215",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0002",
+    "name": "Dr. Rajesh Patel",
+    "phone_number": "+914481378161",
+    "license_number": "MCI-506974",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0003",
+    "name": "Dr. Rajesh Mehta",
+    "phone_number": "+917440093025",
+    "license_number": "MCI-189798",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0004",
+    "name": "Dr. Anil Malhotra",
+    "phone_number": "+916477452366",
+    "license_number": "MCI-802785",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0005",
+    "name": "Dr. Kunal Iyer",
+    "phone_number": "+916026418156",
+    "license_number": "MCI-485934",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0006",
+    "name": "Dr. Deepak Jain",
+    "phone_number": "+910982197277",
+    "license_number": "MCI-159824",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0007",
+    "name": "Dr. Sunil Malhotra",
+    "phone_number": "+910065128028",
+    "license_number": "MCI-437961",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0008",
+    "name": "Dr. Ritu Jain",
+    "phone_number": "+919369715863",
+    "license_number": "MCI-264529",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0009",
+    "name": "Dr. Anjali Singh",
+    "phone_number": "+915776464366",
+    "license_number": "MCI-145188",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0010",
+    "name": "Dr. Anil Iyer",
+    "phone_number": "+917440754873",
+    "license_number": "MCI-889180",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0011",
+    "name": "Dr. Ritu Nair",
+    "phone_number": "+918649237584",
+    "license_number": "MCI-235751",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0012",
+    "name": "Dr. Ashok Agarwal",
+    "phone_number": "+910307168529",
+    "license_number": "MCI-433012",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0013",
+    "name": "Dr. Sanjay Kumar",
+    "phone_number": "+915505302445",
+    "license_number": "MCI-616658",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0014",
+    "name": "Dr. Rohit Verma",
+    "phone_number": "+910697542532",
+    "license_number": "MCI-686183",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0015",
+    "name": "Dr. Kavita Gupta",
+    "phone_number": "+918616500844",
+    "license_number": "MCI-463287",
+    "verified": true,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0016",
+    "name": "Dr. Vikas Patel",
+    "phone_number": "+919009735731",
+    "license_number": "MCI-778754",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0017",
+    "name": "Dr. Manish Agarwal",
+    "phone_number": "+918972012169",
+    "license_number": "MCI-753745",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0018",
+    "name": "Dr. Suresh Kumar",
+    "phone_number": "+918520826153",
+    "license_number": "MCI-264874",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0019",
+    "name": "Dr. Anjali Sharma",
+    "phone_number": "+910622740484",
+    "license_number": "MCI-734408",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0020",
+    "name": "Dr. Kavita Singh",
+    "phone_number": "+914882115752",
+    "license_number": "MCI-479243",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0021",
+    "name": "Dr. Rakesh Sharma",
+    "phone_number": "+917347111552",
+    "license_number": "MCI-750652",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0022",
+    "name": "Dr. Ritu Sharma",
+    "phone_number": "+911882500039",
+    "license_number": "MCI-827719",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0023",
+    "name": "Dr. Deepak Iyer",
+    "phone_number": "+916098427063",
+    "license_number": "MCI-802393",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0024",
+    "name": "Dr. Vivek Jain",
+    "phone_number": "+919054305960",
+    "license_number": "MCI-735375",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0025",
+    "name": "Dr. Meena Singh",
+    "phone_number": "+913104546114",
+    "license_number": "MCI-475320",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0026",
+    "name": "Dr. Suresh Patel",
+    "phone_number": "+910530361899",
+    "license_number": "MCI-627451",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0027",
+    "name": "Dr. Sanjay Verma",
+    "phone_number": "+914148731929",
+    "license_number": "MCI-312635",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0028",
+    "name": "Dr. Amit Singh",
+    "phone_number": "+914277239003",
+    "license_number": "MCI-403732",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0029",
+    "name": "Dr. Manish Agarwal",
+    "phone_number": "+913653653191",
+    "license_number": "MCI-193347",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0030",
+    "name": "Dr. Deepak Singh",
+    "phone_number": "+913239996371",
+    "license_number": "MCI-102544",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0031",
+    "name": "Dr. Rakesh Jain",
+    "phone_number": "+911152857776",
+    "license_number": "MCI-396999",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0032",
+    "name": "Dr. Suresh Verma",
+    "phone_number": "+914103251083",
+    "license_number": "MCI-869641",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0033",
+    "name": "Dr. Anjali Mehta",
+    "phone_number": "+919564106338",
+    "license_number": "MCI-408898",
+    "verified": true,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0034",
+    "name": "Dr. Shalini Agarwal",
+    "phone_number": "+915758887331",
+    "license_number": "MCI-813835",
+    "verified": false,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0035",
+    "name": "Dr. Rajesh Nair",
+    "phone_number": "+916622549391",
+    "license_number": "MCI-351564",
+    "verified": false,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0036",
+    "name": "Dr. Sanjay Iyer",
+    "phone_number": "+912142223030",
+    "license_number": "MCI-321642",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0037",
+    "name": "Dr. Vikas Patel",
+    "phone_number": "+912826565956",
+    "license_number": "MCI-701175",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0038",
+    "name": "Dr. Pooja Chatterjee",
+    "phone_number": "+910643530015",
+    "license_number": "MCI-253293",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0039",
+    "name": "Dr. Amit Patel",
+    "phone_number": "+919654467894",
+    "license_number": "MCI-848578",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0040",
+    "name": "Dr. Ashok Verma",
+    "phone_number": "+911424728360",
+    "license_number": "MCI-398563",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0041",
+    "name": "Dr. Kavita Jain",
+    "phone_number": "+915800583279",
+    "license_number": "MCI-310807",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0042",
+    "name": "Dr. Vivek Iyer",
+    "phone_number": "+913935451434",
+    "license_number": "MCI-607254",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0043",
+    "name": "Dr. Ashok Kumar",
+    "phone_number": "+919450912290",
+    "license_number": "MCI-469072",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0044",
+    "name": "Dr. Rohit Agarwal",
+    "phone_number": "+915845087470",
+    "license_number": "MCI-442126",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0045",
+    "name": "Dr. Shalini Patel",
+    "phone_number": "+910916763847",
+    "license_number": "MCI-510222",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0046",
+    "name": "Dr. Kunal Kumar",
+    "phone_number": "+917952283747",
+    "license_number": "MCI-135495",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0047",
+    "name": "Dr. Meena Singh",
+    "phone_number": "+913084464113",
+    "license_number": "MCI-167305",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0048",
+    "name": "Dr. Vikas Nair",
+    "phone_number": "+917772566650",
+    "license_number": "MCI-209437",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0049",
+    "name": "Dr. Anjali Nair",
+    "phone_number": "+910320702601",
+    "license_number": "MCI-428613",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0050",
+    "name": "Dr. Pradeep Malhotra",
+    "phone_number": "+913414754555",
+    "license_number": "MCI-218878",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0051",
+    "name": "Dr. Deepak Kumar",
+    "phone_number": "+913211679548",
+    "license_number": "MCI-287600",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0052",
+    "name": "Dr. Shalini Jain",
+    "phone_number": "+913172141474",
+    "license_number": "MCI-654756",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0053",
+    "name": "Dr. Ritu Nair",
+    "phone_number": "+919257116857",
+    "license_number": "MCI-211904",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0054",
+    "name": "Dr. Kiran Iyer",
+    "phone_number": "+917594806289",
+    "license_number": "MCI-581458",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0055",
+    "name": "Dr. Sunil Malhotra",
+    "phone_number": "+916960881116",
+    "license_number": "MCI-641773",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0056",
+    "name": "Dr. Anjali Gupta",
+    "phone_number": "+910162274621",
+    "license_number": "MCI-723221",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0057",
+    "name": "Dr. Sunil Iyer",
+    "phone_number": "+912188069876",
+    "license_number": "MCI-576663",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0058",
+    "name": "Dr. Meena Kumar",
+    "phone_number": "+913003723421",
+    "license_number": "MCI-372628",
+    "verified": false,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0059",
+    "name": "Dr. Rohit Nair",
+    "phone_number": "+916189866685",
+    "license_number": "MCI-643786",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0060",
+    "name": "Dr. Sunil Verma",
+    "phone_number": "+918889208395",
+    "license_number": "MCI-777366",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0061",
+    "name": "Dr. Kiran Sharma",
+    "phone_number": "+918638249496",
+    "license_number": "MCI-601379",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0062",
+    "name": "Dr. Kavita Gupta",
+    "phone_number": "+917099789465",
+    "license_number": "MCI-101297",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0063",
+    "name": "Dr. Kavita Jain",
+    "phone_number": "+911684436794",
+    "license_number": "MCI-754456",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0064",
+    "name": "Dr. Pooja Singh",
+    "phone_number": "+917762408072",
+    "license_number": "MCI-839035",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0065",
+    "name": "Dr. Manish Malhotra",
+    "phone_number": "+915434256711",
+    "license_number": "MCI-430055",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0066",
+    "name": "Dr. Amit Nair",
+    "phone_number": "+918437062837",
+    "license_number": "MCI-922666",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0067",
+    "name": "Dr. Kavita Patel",
+    "phone_number": "+918946989438",
+    "license_number": "MCI-185098",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0068",
+    "name": "Dr. Sunil Kumar",
+    "phone_number": "+918134306939",
+    "license_number": "MCI-225337",
+    "verified": false,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0069",
+    "name": "Dr. Pooja Nair",
+    "phone_number": "+916404081464",
+    "license_number": "MCI-853344",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0070",
+    "name": "Dr. Vivek Malhotra",
+    "phone_number": "+912310547556",
+    "license_number": "MCI-353611",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0071",
+    "name": "Dr. Kavita Malhotra",
+    "phone_number": "+916503854847",
+    "license_number": "MCI-911109",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0072",
+    "name": "Dr. Meena Bansal",
+    "phone_number": "+912735780380",
+    "license_number": "MCI-450117",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0073",
+    "name": "Dr. Anjali Chatterjee",
+    "phone_number": "+912039510148",
+    "license_number": "MCI-316334",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0074",
+    "name": "Dr. Vivek Agarwal",
+    "phone_number": "+916287037234",
+    "license_number": "MCI-909289",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0075",
+    "name": "Dr. Sunil Mehta",
+    "phone_number": "+919702424211",
+    "license_number": "MCI-658720",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0076",
+    "name": "Dr. Kiran Kumar",
+    "phone_number": "+913132843264",
+    "license_number": "MCI-211115",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0077",
+    "name": "Dr. Sunil Patel",
+    "phone_number": "+917032159492",
+    "license_number": "MCI-372627",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0078",
+    "name": "Dr. Suresh Singh",
+    "phone_number": "+918450061196",
+    "license_number": "MCI-413837",
+    "verified": false,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0079",
+    "name": "Dr. Ritu Gupta",
+    "phone_number": "+910479880547",
+    "license_number": "MCI-886226",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0080",
+    "name": "Dr. Kiran Chatterjee",
+    "phone_number": "+915698896917",
+    "license_number": "MCI-938574",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0081",
+    "name": "Dr. Suresh Agarwal",
+    "phone_number": "+916527982823",
+    "license_number": "MCI-268861",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0082",
+    "name": "Dr. Shalini Kumar",
+    "phone_number": "+915372945831",
+    "license_number": "MCI-724136",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0083",
+    "name": "Dr. Neha Jain",
+    "phone_number": "+917904612903",
+    "license_number": "MCI-324552",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0084",
+    "name": "Dr. Kiran Mehta",
+    "phone_number": "+919594828191",
+    "license_number": "MCI-411034",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0085",
+    "name": "Dr. Sanjay Singh",
+    "phone_number": "+918735889971",
+    "license_number": "MCI-490708",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0086",
+    "name": "Dr. Anjali Kumar",
+    "phone_number": "+912621142130",
+    "license_number": "MCI-402532",
+    "verified": true,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0087",
+    "name": "Dr. Rajesh Sharma",
+    "phone_number": "+911519632365",
+    "license_number": "MCI-824507",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0088",
+    "name": "Dr. Kiran Bansal",
+    "phone_number": "+918840892162",
+    "license_number": "MCI-953330",
+    "verified": false,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0089",
+    "name": "Dr. Rakesh Mehta",
+    "phone_number": "+912632546544",
+    "license_number": "MCI-407307",
+    "verified": true,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0090",
+    "name": "Dr. Kunal Singh",
+    "phone_number": "+918980167293",
+    "license_number": "MCI-853021",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0091",
+    "name": "Dr. Vikas Nair",
+    "phone_number": "+911927768389",
+    "license_number": "MCI-256998",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0092",
+    "name": "Dr. Rakesh Gupta",
+    "phone_number": "+918699517243",
+    "license_number": "MCI-487153",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0093",
+    "name": "Dr. Pooja Chatterjee",
+    "phone_number": "+911942682542",
+    "license_number": "MCI-138626",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0094",
+    "name": "Dr. Neha Malhotra",
+    "phone_number": "+912915825851",
+    "license_number": "MCI-624869",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0095",
+    "name": "Dr. Anjali Mehta",
+    "phone_number": "+918029617288",
+    "license_number": "MCI-309981",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0096",
+    "name": "Dr. Sunil Jain",
+    "phone_number": "+919503667152",
+    "license_number": "MCI-440699",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0097",
+    "name": "Dr. Meena Mehta",
+    "phone_number": "+918057006523",
+    "license_number": "MCI-361469",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0098",
+    "name": "Dr. Sanjay Malhotra",
+    "phone_number": "+918802670818",
+    "license_number": "MCI-501896",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0099",
+    "name": "Dr. Ritu Jain",
+    "phone_number": "+915470559039",
+    "license_number": "MCI-377502",
+    "verified": false,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0100",
+    "name": "Dr. Pooja Chatterjee",
+    "phone_number": "+912480519255",
+    "license_number": "MCI-976763",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0101",
+    "name": "Dr. Sanjay Chatterjee",
+    "phone_number": "+919714526152",
+    "license_number": "MCI-488037",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0102",
+    "name": "Dr. Suresh Gupta",
+    "phone_number": "+916718165086",
+    "license_number": "MCI-408015",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0103",
+    "name": "Dr. Anjali Mehta",
+    "phone_number": "+915484357771",
+    "license_number": "MCI-884642",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0104",
+    "name": "Dr. Ashok Singh",
+    "phone_number": "+914417441099",
+    "license_number": "MCI-479213",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0105",
+    "name": "Dr. Kiran Agarwal",
+    "phone_number": "+912135146116",
+    "license_number": "MCI-719721",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0106",
+    "name": "Dr. Vikas Nair",
+    "phone_number": "+913589805233",
+    "license_number": "MCI-850314",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0107",
+    "name": "Dr. Vikas Gupta",
+    "phone_number": "+915878425170",
+    "license_number": "MCI-553443",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0108",
+    "name": "Dr. Pooja Mehta",
+    "phone_number": "+916505916040",
+    "license_number": "MCI-431798",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0109",
+    "name": "Dr. Rohit Verma",
+    "phone_number": "+915180963953",
+    "license_number": "MCI-957353",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0110",
+    "name": "Dr. Suresh Verma",
+    "phone_number": "+913662875950",
+    "license_number": "MCI-685176",
+    "verified": true,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0111",
+    "name": "Dr. Kavita Mehta",
+    "phone_number": "+919897423581",
+    "license_number": "MCI-642954",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0112",
+    "name": "Dr. Ritu Patel",
+    "phone_number": "+910086939683",
+    "license_number": "MCI-383477",
+    "verified": false,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0113",
+    "name": "Dr. Ritu Jain",
+    "phone_number": "+911160282194",
+    "license_number": "MCI-602052",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0114",
+    "name": "Dr. Ritu Chatterjee",
+    "phone_number": "+918449876132",
+    "license_number": "MCI-308396",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0115",
+    "name": "Dr. Anjali Iyer",
+    "phone_number": "+918443907652",
+    "license_number": "MCI-169448",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0116",
+    "name": "Dr. Rohit Singh",
+    "phone_number": "+911836183505",
+    "license_number": "MCI-434879",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0117",
+    "name": "Dr. Sanjay Kumar",
+    "phone_number": "+915501398821",
+    "license_number": "MCI-122316",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0118",
+    "name": "Dr. Vivek Kumar",
+    "phone_number": "+918972755521",
+    "license_number": "MCI-629203",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0119",
+    "name": "Dr. Rajesh Bansal",
+    "phone_number": "+917296451561",
+    "license_number": "MCI-585555",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0120",
+    "name": "Dr. Deepak Nair",
+    "phone_number": "+917222489329",
+    "license_number": "MCI-532140",
+    "verified": true,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0121",
+    "name": "Dr. Suresh Sharma",
+    "phone_number": "+911493853781",
+    "license_number": "MCI-580862",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0122",
+    "name": "Dr. Suresh Iyer",
+    "phone_number": "+917892041493",
+    "license_number": "MCI-337537",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0123",
+    "name": "Dr. Kunal Iyer",
+    "phone_number": "+912106792848",
+    "license_number": "MCI-891555",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0124",
+    "name": "Dr. Ritu Malhotra",
+    "phone_number": "+918267146169",
+    "license_number": "MCI-233281",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0125",
+    "name": "Dr. Sanjay Bansal",
+    "phone_number": "+914373548662",
+    "license_number": "MCI-891309",
+    "verified": false,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0126",
+    "name": "Dr. Kiran Singh",
+    "phone_number": "+919902956753",
+    "license_number": "MCI-570038",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0127",
+    "name": "Dr. Vivek Chatterjee",
+    "phone_number": "+915394725589",
+    "license_number": "MCI-877946",
+    "verified": true,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0128",
+    "name": "Dr. Anil Gupta",
+    "phone_number": "+919976831128",
+    "license_number": "MCI-471784",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0129",
+    "name": "Dr. Neha Kumar",
+    "phone_number": "+912607301338",
+    "license_number": "MCI-725757",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0130",
+    "name": "Dr. Vikas Bansal",
+    "phone_number": "+918917790151",
+    "license_number": "MCI-905337",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0131",
+    "name": "Dr. Pooja Verma",
+    "phone_number": "+917007139145",
+    "license_number": "MCI-681560",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0132",
+    "name": "Dr. Ritu Nair",
+    "phone_number": "+917740574514",
+    "license_number": "MCI-133000",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0133",
+    "name": "Dr. Deepak Bansal",
+    "phone_number": "+912487168029",
+    "license_number": "MCI-465037",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0134",
+    "name": "Dr. Kunal Bansal",
+    "phone_number": "+919046279725",
+    "license_number": "MCI-244645",
+    "verified": true,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0135",
+    "name": "Dr. Kunal Agarwal",
+    "phone_number": "+911522779742",
+    "license_number": "MCI-192852",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0136",
+    "name": "Dr. Shalini Gupta",
+    "phone_number": "+916628593116",
+    "license_number": "MCI-854281",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0137",
+    "name": "Dr. Vikas Gupta",
+    "phone_number": "+912597229194",
+    "license_number": "MCI-821954",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0138",
+    "name": "Dr. Kavita Singh",
+    "phone_number": "+910908190062",
+    "license_number": "MCI-646253",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0139",
+    "name": "Dr. Rajesh Singh",
+    "phone_number": "+913025653386",
+    "license_number": "MCI-989726",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0140",
+    "name": "Dr. Ashok Agarwal",
+    "phone_number": "+912965061792",
+    "license_number": "MCI-913008",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0141",
+    "name": "Dr. Pradeep Patel",
+    "phone_number": "+918863302350",
+    "license_number": "MCI-127077",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0142",
+    "name": "Dr. Neha Verma",
+    "phone_number": "+915508425206",
+    "license_number": "MCI-278580",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0143",
+    "name": "Dr. Meena Verma",
+    "phone_number": "+916666408902",
+    "license_number": "MCI-962922",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0144",
+    "name": "Dr. Deepak Nair",
+    "phone_number": "+912638442661",
+    "license_number": "MCI-126217",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0145",
+    "name": "Dr. Rohit Verma",
+    "phone_number": "+910594998377",
+    "license_number": "MCI-580246",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0146",
+    "name": "Dr. Kavita Nair",
+    "phone_number": "+914987273494",
+    "license_number": "MCI-308805",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0147",
+    "name": "Dr. Rajesh Verma",
+    "phone_number": "+919923936963",
+    "license_number": "MCI-201191",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0148",
+    "name": "Dr. Anjali Patel",
+    "phone_number": "+917045089363",
+    "license_number": "MCI-395288",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0149",
+    "name": "Dr. Deepak Iyer",
+    "phone_number": "+910451316538",
+    "license_number": "MCI-917682",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0150",
+    "name": "Dr. Vikas Agarwal",
+    "phone_number": "+912288717925",
+    "license_number": "MCI-218215",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0151",
+    "name": "Dr. Anjali Sharma",
+    "phone_number": "+912092316675",
+    "license_number": "MCI-753394",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0152",
+    "name": "Dr. Shalini Singh",
+    "phone_number": "+914749541262",
+    "license_number": "MCI-628944",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0153",
+    "name": "Dr. Deepak Kumar",
+    "phone_number": "+915407861469",
+    "license_number": "MCI-989910",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0154",
+    "name": "Dr. Vivek Nair",
+    "phone_number": "+911696524213",
+    "license_number": "MCI-356268",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0155",
+    "name": "Dr. Anil Patel",
+    "phone_number": "+918971955365",
+    "license_number": "MCI-548150",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0156",
+    "name": "Dr. Amit Mehta",
+    "phone_number": "+915242874091",
+    "license_number": "MCI-156881",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0157",
+    "name": "Dr. Meena Nair",
+    "phone_number": "+916000425925",
+    "license_number": "MCI-371901",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0158",
+    "name": "Dr. Shalini Gupta",
+    "phone_number": "+914707777109",
+    "license_number": "MCI-583457",
+    "verified": true,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0159",
+    "name": "Dr. Rohit Nair",
+    "phone_number": "+912376752491",
+    "license_number": "MCI-331607",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0160",
+    "name": "Dr. Pradeep Singh",
+    "phone_number": "+911046464897",
+    "license_number": "MCI-657171",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0161",
+    "name": "Dr. Kavita Sharma",
+    "phone_number": "+911571020719",
+    "license_number": "MCI-654854",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0162",
+    "name": "Dr. Anjali Chatterjee",
+    "phone_number": "+918301241478",
+    "license_number": "MCI-989159",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0163",
+    "name": "Dr. Neha Iyer",
+    "phone_number": "+918256103092",
+    "license_number": "MCI-285244",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0164",
+    "name": "Dr. Deepak Chatterjee",
+    "phone_number": "+915034715973",
+    "license_number": "MCI-487520",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0165",
+    "name": "Dr. Vivek Sharma",
+    "phone_number": "+914637060721",
+    "license_number": "MCI-863004",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0166",
+    "name": "Dr. Ritu Chatterjee",
+    "phone_number": "+917443993893",
+    "license_number": "MCI-130190",
+    "verified": true,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0167",
+    "name": "Dr. Pooja Nair",
+    "phone_number": "+915667321477",
+    "license_number": "MCI-413823",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0168",
+    "name": "Dr. Anil Patel",
+    "phone_number": "+915610887914",
+    "license_number": "MCI-316754",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0169",
+    "name": "Dr. Rakesh Malhotra",
+    "phone_number": "+914003255523",
+    "license_number": "MCI-135190",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0170",
+    "name": "Dr. Kiran Chatterjee",
+    "phone_number": "+911440736260",
+    "license_number": "MCI-195800",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0171",
+    "name": "Dr. Ashok Iyer",
+    "phone_number": "+910671915949",
+    "license_number": "MCI-476010",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0172",
+    "name": "Dr. Ritu Mehta",
+    "phone_number": "+916607187909",
+    "license_number": "MCI-946864",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0173",
+    "name": "Dr. Ashok Patel",
+    "phone_number": "+918808923909",
+    "license_number": "MCI-465442",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0174",
+    "name": "Dr. Kiran Nair",
+    "phone_number": "+915456402000",
+    "license_number": "MCI-305767",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0175",
+    "name": "Dr. Pooja Agarwal",
+    "phone_number": "+916167626675",
+    "license_number": "MCI-737960",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0176",
+    "name": "Dr. Vivek Malhotra",
+    "phone_number": "+912222276458",
+    "license_number": "MCI-605525",
+    "verified": false,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0177",
+    "name": "Dr. Pooja Patel",
+    "phone_number": "+910652291958",
+    "license_number": "MCI-757455",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0178",
+    "name": "Dr. Ashok Sharma",
+    "phone_number": "+915755255514",
+    "license_number": "MCI-782367",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0179",
+    "name": "Dr. Pooja Bansal",
+    "phone_number": "+914090590582",
+    "license_number": "MCI-832578",
+    "verified": true,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0180",
+    "name": "Dr. Kiran Patel",
+    "phone_number": "+916175716679",
+    "license_number": "MCI-605015",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0181",
+    "name": "Dr. Manish Iyer",
+    "phone_number": "+913085628886",
+    "license_number": "MCI-962051",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0182",
+    "name": "Dr. Kunal Kumar",
+    "phone_number": "+918277540637",
+    "license_number": "MCI-231632",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0183",
+    "name": "Dr. Suresh Patel",
+    "phone_number": "+912669556394",
+    "license_number": "MCI-789401",
+    "verified": false,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0184",
+    "name": "Dr. Shalini Gupta",
+    "phone_number": "+911782546323",
+    "license_number": "MCI-368759",
+    "verified": false,
+    "specialization": "Psychiatrist"
+  },
+  {
+    "doctor_id": "doc_0185",
+    "name": "Dr. Deepak Agarwal",
+    "phone_number": "+912334696934",
+    "license_number": "MCI-235558",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0186",
+    "name": "Dr. Pooja Sharma",
+    "phone_number": "+912385758919",
+    "license_number": "MCI-371404",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0187",
+    "name": "Dr. Kavita Jain",
+    "phone_number": "+913122829139",
+    "license_number": "MCI-563619",
+    "verified": true,
+    "specialization": "Neurologist"
+  },
+  {
+    "doctor_id": "doc_0188",
+    "name": "Dr. Pooja Nair",
+    "phone_number": "+912401758862",
+    "license_number": "MCI-249978",
+    "verified": false,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0189",
+    "name": "Dr. Anjali Iyer",
+    "phone_number": "+918736073034",
+    "license_number": "MCI-460382",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0190",
+    "name": "Dr. Shalini Bansal",
+    "phone_number": "+911862401543",
+    "license_number": "MCI-845930",
+    "verified": true,
+    "specialization": "Cardiologist"
+  },
+  {
+    "doctor_id": "doc_0191",
+    "name": "Dr. Rohit Jain",
+    "phone_number": "+918683728881",
+    "license_number": "MCI-226853",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0192",
+    "name": "Dr. Kiran Bansal",
+    "phone_number": "+913191885930",
+    "license_number": "MCI-627657",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0193",
+    "name": "Dr. Sanjay Malhotra",
+    "phone_number": "+912292611991",
+    "license_number": "MCI-737232",
+    "verified": false,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0194",
+    "name": "Dr. Kunal Iyer",
+    "phone_number": "+911676163833",
+    "license_number": "MCI-191508",
+    "verified": false,
+    "specialization": "Pediatrician"
+  },
+  {
+    "doctor_id": "doc_0195",
+    "name": "Dr. Vikas Jain",
+    "phone_number": "+916915111703",
+    "license_number": "MCI-995336",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0196",
+    "name": "Dr. Amit Sharma",
+    "phone_number": "+914156780037",
+    "license_number": "MCI-439836",
+    "verified": true,
+    "specialization": "Oncologist"
+  },
+  {
+    "doctor_id": "doc_0197",
+    "name": "Dr. Pooja Agarwal",
+    "phone_number": "+912182125514",
+    "license_number": "MCI-945254",
+    "verified": false,
+    "specialization": "Dermatologist"
+  },
+  {
+    "doctor_id": "doc_0198",
+    "name": "Dr. Pradeep Patel",
+    "phone_number": "+912555528207",
+    "license_number": "MCI-444546",
+    "verified": true,
+    "specialization": "General Physician"
+  },
+  {
+    "doctor_id": "doc_0199",
+    "name": "Dr. Manish Bansal",
+    "phone_number": "+913497293414",
+    "license_number": "MCI-822534",
+    "verified": true,
+    "specialization": "Orthopedic"
+  },
+  {
+    "doctor_id": "doc_0200",
+    "name": "Dr. Sunil Chatterjee",
+    "phone_number": "+916483369903",
+    "license_number": "MCI-567677",
+    "verified": false,
+    "specialization": "Cardiologist"
+  }
+]

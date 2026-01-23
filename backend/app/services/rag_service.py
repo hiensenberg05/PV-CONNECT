@@ -1,11 +1,12 @@
-from app.services.gemini_service import get_client
+import google.generativeai as genai
 from app.services.mongodb_service import get_db
 
 
 async def create_embedding(text: str):
-    client = get_client()
-    result = client.embed_content(model="models/text-embedding-004", content=text)
+    """Create embedding using Gemini API"""
+    result = genai.embed_content(model="models/text-embedding-004", content=text)
     return result["embedding"]
+
 
 
 async def find_similar_cases(query_text: str, limit: int = 10):

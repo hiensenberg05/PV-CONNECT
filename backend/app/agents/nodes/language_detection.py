@@ -1,11 +1,26 @@
-from app.services.gemini_service import get_model
-from app.agents.state import CaseState
+from app.services.gemini_service import detect_language
+from app.agents.state import GraphState
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-async def detect_language_node(state: CaseState) -> CaseState:
-    model = get_model()
-    text = state.get("current_message", "")
-    prompt = f'Detect ISO language code only for: "{text}". Return JSON {{"language": "en"}}'
-    response = model.generate_content(prompt)
-    state["language"] = response.text.strip().lower()[:2] or "en"
+async def detect_language_node(state: GraphState) -> GraphState:
+    """Detect language from message text using LLM"""
+    message = state.get("message", "")
+    
+    if not message:
+        logger.warning("Empty message in language detection")
+        state["language"] = "en"
+        return state
+    
+    try:
+        result = await detect_language(message)
+        language = result.get("language", "en")
+        state["language"] = language
+        logger.info(f"Detected language: {language}")
+    except Exception as e:
+        logger.error(f"Language detection error: {e}")
+        state["language"] = "en"  # Default to English on failure
+    
     return state

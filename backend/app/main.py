@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import webhooks, dashboard, websockets
 
 app = FastAPI(title="PV Connect", version="0.1.0")
-
+WHATSAPP_VERIFY_TOKEN = "my_verified_token_123"
 # Allow dashboard dev origin; tighten in production.
 app.add_middleware(
     CORSMiddleware,

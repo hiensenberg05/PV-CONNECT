@@ -11,7 +11,7 @@ const NEST20Platform = () => {
 
   // Dummy credentials
   const VALID_EMAIL = 'demo@nest.com';
-  const VALID_PASSWORD = 'demo123';
+  const VALID_PASSWORD = 'qwertyuiop09876';
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -21,7 +21,7 @@ const NEST20Platform = () => {
       navigate('/dashboard');
 
     } else {
-      setLoginError('Invalid email or password. Try demo@nest.com / demo123');
+      setLoginError('Invalid email or password. Try demo@nest.com / qwertyuiop09876');
     }
   };
 

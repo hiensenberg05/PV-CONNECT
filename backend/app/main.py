@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import webhooks, dashboard, websockets
+from app.api import webhooks
 
 app = FastAPI(title="PV Connect", version="0.1.0")
 
-# Allow dashboard dev origin; tighten in production.
+# CORS middleware for WhatsApp webhook integration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,8 +14,6 @@ app.add_middleware(
 )
 
 app.include_router(webhooks.router, prefix="/webhook", tags=["webhook"])
-app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
-app.include_router(websockets.router)
 
 
 @app.get("/health")

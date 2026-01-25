@@ -1,6 +1,6 @@
 """
-PV Connect - FastAPI Server with ngrok (Token in Code)
-Alternative version that accepts auth token directly in the script
+PV Connect - FastAPI Server with ngrok
+Loads configuration from .env file
 """
 
 import os
@@ -8,11 +8,15 @@ import sys
 import time
 from pyngrok import ngrok
 import uvicorn
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # ============================================================================
-# CONFIGURATION - ADD YOUR NGROK AUTH TOKEN HERE
+# CONFIGURATION
 # ============================================================================
-NGROK_AUTH_TOKEN = "38cngvN64QgRuofOSYxV6870cpZ_3V1Yds7jBynpRbtwptdWr"  # Paste your token here between the quotes
+NGROK_AUTH_TOKEN = os.getenv("NGROK_AUTH_TOKEN")
 PORT = 8000
 REGION = "in"  # Options: us, eu, ap, au, sa, jp, in
 # ============================================================================
@@ -36,11 +40,10 @@ def start_ngrok(port: int = 8000):
         print("\n📋 Instructions:")
         print("1. Go to: https://dashboard.ngrok.com/get-started/your-authtoken")
         print("2. Copy your auth token")
-        print("3. Open this file: run_with_token.py")
-        print("4. Find the line: NGROK_AUTH_TOKEN = \"\"")
-        print("5. Paste your token between the quotes")
-        print("\nExample:")
-        print('   NGROK_AUTH_TOKEN = "2abc123def456..."')
+        print("3. Open the .env file in the project root")
+        print("4. Add this line: NGROK_AUTH_TOKEN=your_token_here")
+        print("\nExample .env entry:")
+        print('   NGROK_AUTH_TOKEN=2abc123def456...')
         print("\n" + "="*80 + "\n")
         sys.exit(1)
     
@@ -59,8 +62,7 @@ def start_ngrok(port: int = 8000):
         print(f"\n📡 Public URL: {public_url}")
         print(f"🏠 Local URL:  http://localhost:{port}")
         print(f"\n📋 WhatsApp Webhook URL: {public_url}/webhook")
-        print(f"📊 Dashboard API: {public_url}/dashboard/cases")
-        print(f"📚 API Docs: {public_url}/docs")
+        print(f" API Docs: {public_url}/docs")
         print(f"❤️  Health Check: {public_url}/health")
         print("\n" + "=" * 80)
         print("⚠️  IMPORTANT: Copy the webhook URL above and paste it in Meta Developer Console")

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVA - AI Pharmacovigilance Assistant</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>NOVA</h1>
+            <p>AI Pharmacovigilance Assistant</p>
+        </div>
+
+        <!-- Chat Window -->
+        <div class="chat-window" id="chatWindow">
+            <div class="welcome-message">
+                <p>Welcome to NOVA. Send a message to start.</p>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <input type="file" id="voiceInput" accept="audio/*" style="display: none;">
+
+            <button class="icon-btn" id="imageBtn" title="Upload Image">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+            </button>
+
+            <button class="icon-btn" id="voiceBtn" title="Upload Voice">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+            </button>
+
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+
+            <button class="send-btn" id="sendBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+
+</html>

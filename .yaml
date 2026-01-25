@@ -1,0 +1,194 @@
+graph:
+  name: NOVA Advanced AI Pharmacovigilance Assistant
+  version: "1.1"
+  description: >
+    A LangGraph-based, multimodal pharmacovigilance assistant
+    supporting patient and doctor reporting via WhatsApp.
+
+# =========================
+# GLOBAL STATE DEFINITION
+# =========================
+state:
+  case_id: null
+  sender_phone: null
+
+  sender_type: null            # patient | doctor
+  language: null               # en, hi, fr, etc
+  country: null                # inferred from phone code
+
+  verified_doctor: false
+  license_status: null         # pending | approved | rejected
+
+  extracted_data: {}
+  missing_fields: []
+
+  completeness_score: 0.0
+  confidence_score: 0.0
+
+  messages: []
+  attachments: []
+
+  status: open                 # open | escalated | closed
+
+# =========================
+# ENTRY POINT
+# =========================
+entry_point: language_detection
+
+# =========================
+# NODES
+# =========================
+nodes:
+
+  language_detection:
+    type: llm
+    output_key: language
+    prompt: |
+      Detect the language of the user's message.
+      If multiple languages are present, select the dominant one.
+      Respond ONLY with ISO 639-1 language code.
+    next: user_type_detection
+
+  user_type_detection:
+    type: llm
+    output_key: sender_type
+    prompt: |
+      Classify the user as:
+      - patient
+      - doctor
+
+      Use medical terminology, tone, and self-identification.
+      If unclear, explicitly ask the user to choose.
+    next:
+      patient: patient_intake
+      doctor: doctor_registry_check
+
+  # =========================
+  # DOCTOR FLOW
+  # =========================
+  doctor_registry_check:
+    type: function
+    outputs:
+      verified_doctor: boolean
+    description: |
+      Check doctor phone number against internal registry.
+    next:
+      true: doctor_case_intake
+      false: license_upload_request
+
+  license_upload_request:
+    type: human_in_loop
+    async: true
+    description: |
+      Request medical license and trigger async human verification.
+    prompt: |
+      Please upload a valid medical license.
+      Verification will run asynchronously.
+      You may continue reporting meanwhile.
+    next: doctor_case_intake
+
+  doctor_case_intake:
+    type: llm
+    output_key: extracted_data
+    prompt: |
+      Collect pharmacovigilance information using clinical language:
+      - Drug name (brand + generic)
+      - Dosage and frequency
+      - Observed adverse effects
+      - Severity
+      - Patient demographics if available
+
+      Ask ONLY for missing fields.
+    next: completeness_check
+
+  # =========================
+  # PATIENT FLOW
+  # =========================
+  patient_intake:
+    type: llm
+    output_key: extracted_data
+    prompt: |
+      Use simple, friendly language.
+      Ask about:
+      - Medicine taken
+      - Symptoms experienced
+      - When symptoms started
+      - Any prescription or bill available
+    next: document_intelligence
+
+  document_intelligence:
+    type: multimodal
+    description: Extract structured information from documents.
+    prompt: |
+      Extract:
+      - Drug names
+      - Dosage
+      - Frequency
+      - Clinic / hospital name
+      - Dates
+      Merge with existing extracted data.
+    next: completeness_check
+
+  # =========================
+  # SHARED LOGIC
+  # =========================
+  completeness_check:
+    type: function
+    outputs:
+      completeness_score: float
+      missing_fields: list
+    description: |
+      Validate mandatory pharmacovigilance fields.
+    next:
+      complete: clinical_triage
+      incomplete: followup_or_case_id
+
+  followup_or_case_id:
+    type: llm
+    prompt: |
+      Ask minimal follow-up questions for missing fields.
+      If still incomplete, generate a unique Case ID
+      for doctor continuation.
+    next: clinical_triage
+
+  clinical_triage:
+    type: llm
+    prompt: |
+      Compare reported symptoms with known side effects
+      from internal drug safety database.
+
+      Classify as:
+      - Known / Expected
+      - Unusual
+      - Severe
+
+      Escalate unusual or severe cases.
+    next: confidence_scoring
+
+  confidence_scoring:
+    type: function
+    outputs:
+      confidence_score: float
+    description: |
+      Score case based on consistency, plausibility,
+      completeness, and reporter credibility.
+    next: persist_case
+
+  persist_case:
+    type: function
+    description: |
+      Store structured case JSON, message logs,
+      and metadata in database.
+    next: monitoring_pipeline
+
+  monitoring_pipeline:
+    type: analytics
+    description: |
+      Perform non-LLM analytics:
+      - Spike detection
+      - Trend analysis
+      - Regional safety signals
+    next: end
+
+  end:
+    type: terminal

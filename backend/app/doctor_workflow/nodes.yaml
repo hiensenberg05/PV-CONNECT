@@ -1,0 +1,29 @@
+# Doctor Workflow Node Definitions
+# These nodes handle the healthcare professional reporting flow
+
+nodes:
+  doctor_registry_check:
+    type: function
+    description: "Check if doctor phone number is in verified registry"
+    function_name: "check_doctor_registry"
+    output_keys:
+      - verified_doctor
+      - license_status
+    conditional_routing:
+      verified: "doctor_case_intake"
+      not_verified: "license_upload_request"
+    
+  license_upload_request:
+    type: human_in_loop
+    description: "Request medical license upload and trigger async verification"
+    prompt_file: "prompts/license_request.txt"
+    async: true
+    next_node: "doctor_case_intake"  # Allow continuation while verification pending
+    
+  doctor_case_intake:
+    type: llm
+    description: "Collect pharmacovigilance information using clinical terminology"
+    prompt_file: "prompts/doctor_intake.txt"
+    output_keys:
+      - extracted_data
+    next_node: "completeness_check"

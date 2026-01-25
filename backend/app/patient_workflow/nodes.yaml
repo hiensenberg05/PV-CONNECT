@@ -1,0 +1,29 @@
+# Patient Workflow Node Definitions
+# These nodes handle the patient reporting flow
+
+nodes:
+  patient_intake:
+    type: llm
+    description: "Collect pharmacovigilance information from patient using simple language"
+    prompt_file: "prompts/patient_intake.txt"
+    output_keys:
+      - extracted_data
+    next_node: "document_intelligence"
+    
+  document_intelligence:
+    type: multimodal
+    description: "Extract structured information from uploaded documents (prescriptions, bills)"
+    prompt_file: "prompts/document_extraction.txt"
+    output_keys:
+      - extracted_data
+      - attachments
+    next_node: "completeness_check"
+    optional: true  # Skip if no documents uploaded
+    
+  followup_questions:
+    type: llm
+    description: "Ask minimal follow-up questions for missing required fields"
+    prompt_file: "prompts/followup_questions.txt"
+    output_keys:
+      - extracted_data
+    next_node: "clinical_triage"

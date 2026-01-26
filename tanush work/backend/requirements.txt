@@ -1,0 +1,14 @@
+fastapi==0.109.0
+uvicorn==0.27.0
+motor==3.3.2  # Async MongoDB driver
+pymongo==4.6.1  # Keep for compatibility
+pydantic>=2.9.0
+python-multipart==0.0.6
+# google-generativeai==0.3.2  # Replaced with Ollama
+# Ollama is accessed via HTTP API, no Python package needed
+cloudinary==1.38.0
+langgraph>=1.0.0
+python-dotenv==1.0.0
+pillow>=10.4.0
+httpx==0.26.0
+websockets==12.0

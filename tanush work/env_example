@@ -1,0 +1,16 @@
+# WhatsApp Cloud API
+WHATSAPP_PHONE_NUMBER_ID=123456789
+WHATSAPP_ACCESS_TOKEN=your_token
+WHATSAPP_VERIFY_TOKEN=your_secret
+
+# Ollama (default: http://localhost:11434)
+OLLAMA_BASE_URL=http://localhost:11434
+
+# MongoDB
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DATABASE=pv_connect
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud
+CLOUDINARY_API_KEY=your_key
+CLOUDINARY_API_SECRET=your_secret

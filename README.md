@@ -72,6 +72,52 @@ NOVA/
 
 yaml
 Copy code
+NOVA:
+  backend:
+    app:
+      api:
+        advanced_aimonitoring:
+          analysis.py
+          cases.py
+          dashboard.py
+
+        doctor_workflow:
+          nodes.yaml
+          prompts/
+
+        patient_workflow:
+          nodes.yaml
+          prompts/
+
+        schemas:
+          case_schemas.py
+          doctor_schemas.py
+          message_schemas.py
+
+        services:
+          llm_service.py
+          mongodb_service.py
+          cloudinary_service.py
+          rag_service.py
+
+        shared_prompts/
+
+        webhooks.py
+        websockets.py
+        whatsapppconnection.py
+
+      graph.py
+      state.py
+      config.py
+      main.py
+
+    test:
+      test_graph.py
+      testing_gemini.ipynb
+
+    .env
+    env_example.txt
+    README.md
 
 ---
 

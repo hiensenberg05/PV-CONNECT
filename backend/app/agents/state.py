@@ -20,3 +20,7 @@ class CaseState(TypedDict, total=False):
     response_sent: bool
     doctor_verified: bool
     awaiting_license: bool
+    documents_id: str
+    voice_notes_id: str
+    has_medi_bill:bool
+    medi_ans:int

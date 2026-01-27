@@ -32,6 +32,12 @@ def build_graph():
         {"patient_path": "extract_data", "doctor_path": "verify_doctor"},
     )
 
+    workflow.add_conditional_edges(
+        "verify_doctor",
+        lambda state: "verified" if state.get("doctor_verified") else "not_verified",
+        {"verified": "extract_data", "not_verified": "generate_followup"},
+    )
+
     workflow.add_edge("extract_data", "check_compliance")
     workflow.add_edge("check_compliance", "triage_case")
     workflow.add_conditional_edges(

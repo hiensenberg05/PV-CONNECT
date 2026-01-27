@@ -77,7 +77,7 @@ class CaseDocument(BaseModel):
     
     case_id: str = Field(..., description="Unique case identifier")
     sender_phone: str
-    sender_type: Literal["patient", "doctor"]
+    sender_type: Optional[Literal["patient", "doctor"]] = None
     language: str
     country: Optional[str] = None
     
@@ -102,6 +102,7 @@ class CaseDocument(BaseModel):
     
     # Status
     status: Literal["open", "escalated", "closed"]
+    current_node: Optional[str] = Field(None, description="Current workflow node")
     
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)

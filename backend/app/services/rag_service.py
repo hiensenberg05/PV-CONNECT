@@ -12,82 +12,52 @@ class RAGService:
     """Service for retrieving drug safety information"""
     
     def __init__(self):
-        """Initialize RAG service with drug database"""
-        # In production, this would connect to a vector database
-        # with drug safety information from FDA, EMA, etc.
-        self.drug_database = self._load_mock_database()
-        logger.info("Initialized RAG service (mock mode)")
-    
-    def _load_mock_database(self) -> Dict[str, Dict]:
-        """Load mock drug safety database"""
-        return {
-            "aspirin": {
-                "generic_name": "acetylsalicylic acid",
-                "common_side_effects": [
-                    "stomach upset",
-                    "nausea",
-                    "heartburn",
-                    "bleeding",
-                    "bruising"
-                ],
-                "serious_side_effects": [
-                    "severe allergic reaction",
-                    "stomach bleeding",
-                    "liver problems",
-                    "kidney problems"
-                ]
-            },
-            "metformin": {
-                "generic_name": "metformin hydrochloride",
-                "common_side_effects": [
-                    "diarrhea",
-                    "nausea",
-                    "stomach upset",
-                    "metallic taste"
-                ],
-                "serious_side_effects": [
-                    "lactic acidosis",
-                    "hypoglycemia (when combined with other drugs)",
-                    "vitamin B12 deficiency"
-                ]
-            },
-            "penicillin": {
-                "generic_name": "penicillin",
-                "common_side_effects": [
-                    "nausea",
-                    "diarrhea",
-                    "rash"
-                ],
-                "serious_side_effects": [
-                    "anaphylaxis",
-                    "Stevens-Johnson syndrome",
-                    "severe allergic reaction"
-                ]
-            }
-        }
+        """Initialize RAG service"""
+        # We now use the shared mongodb_service
+        logger.info("Initialized RAG service (MongoDB Connected)")
     
     async def get_drug_side_effects(
         self, 
         drug_name: str
     ) -> Optional[Dict[str, List[str]]]:
         """
-        Get known side effects for a drug
+        Get known side effects for a drug from MongoDB
         
         Args:
             drug_name: Name of the drug
             
         Returns:
-            Dictionary with common and serious side effects
+            Dictionary with side effects info
         """
         try:
-            drug_name_lower = drug_name.lower()
+            from app.services.mongodb_service import mongodb_service
             
-            # Search in database
-            if drug_name_lower in self.drug_database:
-                return self.drug_database[drug_name_lower]
+            if mongodb_service.db is None:
+                await mongodb_service.connect()
             
-            # In production, would use fuzzy matching and vector search
-            logger.warning(f"Drug not found in database: {drug_name}")
+            # Case-insensitive regex search
+            regex_pattern = {"$regex": f"^{drug_name}$", "$options": "i"}
+            
+            # Try searching by drug_name or generic_name
+            query = {
+                "$or": [
+                    {"drug_name": regex_pattern},
+                    {"generic_name": regex_pattern}
+                ]
+            }
+            
+            drug_doc = await mongodb_service.db.drugs_database.find_one(query)
+            
+            if drug_doc:
+                # Normalize schema to expected format
+                # The DB has 'known_side_effects' (array)
+                return {
+                    "drug_name": drug_doc.get("drug_name"),
+                    "generic_name": drug_doc.get("generic_name"),
+                    "common_side_effects": drug_doc.get("known_side_effects", []),
+                    "serious_side_effects": drug_doc.get("serious_side_effects", []) # May be empty
+                }
+            
             return None
             
         except Exception as e:
@@ -124,16 +94,19 @@ class RAGService:
             matched_serious = []
             unmatched = []
             
+            common_effects = drug_info.get("common_side_effects", [])
+            serious_effects = drug_info.get("serious_side_effects", [])
+            
             for symptom in symptoms:
-                symptom_lower = symptom.lower()
-                
+                symptom_lower = symptom.lower().strip()
+                if not symptom_lower:
+                    continue
+                    
                 # Check common side effects
-                if any(symptom_lower in effect.lower() 
-                       for effect in drug_info.get("common_side_effects", [])):
+                if any(symptom_lower in effect.lower() for effect in common_effects):
                     matched_common.append(symptom)
                 # Check serious side effects
-                elif any(symptom_lower in effect.lower() 
-                         for effect in drug_info.get("serious_side_effects", [])):
+                elif any(symptom_lower in effect.lower() for effect in serious_effects):
                     matched_serious.append(symptom)
                 else:
                     unmatched.append(symptom)
@@ -143,8 +116,8 @@ class RAGService:
                 "matched_common": matched_common,
                 "matched_serious": matched_serious,
                 "unmatched": unmatched,
-                "all_common_effects": drug_info.get("common_side_effects", []),
-                "all_serious_effects": drug_info.get("serious_side_effects", [])
+                "all_common_effects": common_effects,
+                "all_serious_effects": serious_effects
             }
             
         except Exception as e:

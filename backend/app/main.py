@@ -163,8 +163,14 @@ async def upload_document(
                  raise HTTPException(status_code=404, detail="Case not found")
              state = dict(case)
              state.update(state_update)
-             # Reset current node to extraction
-             state["current_node"] = "document_extraction"
+             
+             # Smart Routing:
+             # If we were waiting for a license, go back to license request node (which now handles uploads)
+             if state.get("current_node") == "license_upload_request":
+                 state["current_node"] = "license_upload_request"
+             else:
+                 # Default for patients -> extraction
+                 state["current_node"] = "document_extraction"
         else:
              # creating new case from upload
              if not sender_phone:

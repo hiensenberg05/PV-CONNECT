@@ -7,6 +7,15 @@ const imageInput = document.getElementById('imageInput');
 const voiceInput = document.getElementById('voiceInput');
 
 const API_URL = 'http://localhost:8000/api/message';
+let currentCaseId = null;
+
+// Check if running from file:// protocol
+if (window.location.protocol === 'file:') {
+    console.warn('⚠️ Running from file:// protocol. Browsers block fetch requests from file:// URLs.');
+    console.warn('⚠️ Please use a local web server instead:');
+    console.warn('   cd frontend && python server.py');
+    console.warn('   Then open: http://localhost:3000/index.html');
+}
 
 // Add message to chat
 function addMessage(sender, content, type = 'text') {
@@ -43,6 +52,9 @@ function addMessage(sender, content, type = 'text') {
 // Send message to backend
 async function sendToBackend(payload) {
     try {
+        console.log('Sending request to:', API_URL);
+        console.log('Payload:', payload);
+        
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
@@ -51,15 +63,25 @@ async function sendToBackend(payload) {
             body: JSON.stringify(payload)
         });
 
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+
         if (!response.ok) {
-            throw new Error('Backend request failed');
+            const errorText = await response.text();
+            console.error('Backend error:', errorText);
+            throw new Error(`Backend request failed: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
+        console.log('Response data:', data);
         return data;
     } catch (error) {
-        console.error('Error:', error);
-        return { response: 'Error: Could not reach backend server.' };
+        console.error('Error details:', error);
+        const errorMessage = error.message || 'Could not reach backend server.';
+        return { 
+            response: `Error: ${errorMessage}. Make sure the backend is running on http://localhost:8000`,
+            error: true
+        };
     }
 }
 
@@ -76,11 +98,29 @@ async function handleSendMessage() {
     const payload = {
         message: message,
         sender_phone: '+1234567890',  // Demo phone number
-        case_id: null
+        case_id: currentCaseId
     };
 
     const response = await sendToBackend(payload);
-    addMessage('assistant', response.response || 'No response from server', 'text');
+
+    // Update case ID from response
+    if (response.case_id) {
+        currentCaseId = response.case_id;
+        console.log("Current Case ID:", currentCaseId);
+    }
+
+    // Reset if case is closed
+    if (response.status === 'closed') {
+        currentCaseId = null;
+        console.log("Case closed, ID reset");
+    }
+
+    // Show error message if there was an error
+    if (response.error) {
+        addMessage('assistant', response.response, 'text');
+    } else {
+        addMessage('assistant', response.response || 'No response from server', 'text');
+    }
 
     sendBtn.disabled = false;
 }
@@ -99,7 +139,9 @@ async function handleImageUpload(file) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('sender_phone', '+1234567890'); // Demo phone number
-        // formData.append('case_id', null); // Optional: add case_id if continuing conversation
+        if (currentCaseId) {
+            formData.append('case_id', currentCaseId);
+        }
 
         const response = await fetch('http://localhost:8000/api/upload', {
             method: 'POST',
@@ -115,6 +157,12 @@ async function handleImageUpload(file) {
         }
 
         const data = await response.json();
+
+        // Update case ID from upload response too
+        if (data.case_id) {
+            currentCaseId = data.case_id;
+        }
+
         addMessage('assistant', data.response || 'Image processed successfully', 'text');
     } catch (error) {
         console.error('Upload error:', error);

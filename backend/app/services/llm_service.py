@@ -1,55 +1,84 @@
 """
-LLM Service using Google Gemini (Flash)
-Optimized for LangGraph + FastAPI with strict rate-limit handling
+LLM Service using Ollama
+Replaces Gemini with local llama3 and llama3.2-vision models
 """
 
 import json
 import logging
-from pathlib import Path
-from typing import Optional, Dict
-
-import google.generativeai as genai
-
+from typing import Optional, Dict, Any, List
+import httpx
 from app.config import settings
 
 logger = logging.getLogger(__name__)
-
 
 # =========================================================
 # Custom Exceptions
 # =========================================================
 
 class RateLimitError(Exception):
-    """Raised when Gemini API quota or rate limit (429) is hit"""
+    """Raised when API rate limit is hit (kept for compatibility)"""
     pass
 
+class LLMError(Exception):
+    """General LLM error"""
+    pass
 
 # =========================================================
-# Gemini Service
+# Ollama Service
 # =========================================================
 
-class GeminiService:
-    """Service wrapper for Google Gemini models"""
+class OllamaService:
+    """Service wrapper for Ollama models"""
 
     def __init__(self):
-        # Configure Gemini once
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-
-        # Initialize models ONCE
-        self.text_model = genai.GenerativeModel(settings.GEMINI_TEXT_MODEL)
-        self.vision_model = genai.GenerativeModel(settings.GEMINI_VISION_MODEL)
-
-        # Shared generation config
-        self.generation_config = {
-            "temperature": settings.GEMINI_TEMPERATURE,
-            "max_output_tokens": settings.GEMINI_MAX_TOKENS,
-        }
-
+        self.base_url = settings.OLLAMA_BASE_URL
+        self.text_model = settings.OLLAMA_TEXT_MODEL
+        self.vision_model = settings.OLLAMA_VISION_MODEL
+        
         logger.info(
-            f"GeminiService initialized | "
-            f"text_model={settings.GEMINI_TEXT_MODEL}, "
-            f"vision_model={settings.GEMINI_VISION_MODEL}"
+            f"OllamaService initialized | "
+            f"base_url={self.base_url} | "
+            f"text_model={self.text_model} | "
+            f"vision_model={self.vision_model}"
         )
+
+    # -----------------------------------------------------
+    # Helpers
+    # -----------------------------------------------------
+    def _clean_json_text(self, text: str) -> str:
+        """Clean JSON text by removing markdown formatting"""
+        text = text.strip()
+        if text.startswith("```json"):
+            text = text[7:]
+        elif text.startswith("```"):
+            text = text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        return text.strip()
+
+    def _extract_first_json_object(self, text: str) -> str:
+        """Best-effort extraction of JSON object/array from response."""
+        text = self._clean_json_text(text)
+        
+        # Fast path
+        if (text.startswith("{") and text.endswith("}")) or \
+           (text.startswith("[") and text.endswith("]")):
+            return text
+
+        # Find first JSON object
+        start_obj = text.find("{")
+        end_obj = text.rfind("}")
+        if start_obj != -1 and end_obj != -1 and end_obj > start_obj:
+            return text[start_obj : end_obj + 1].strip()
+
+        # Find first JSON array
+        start_arr = text.find("[")
+        end_arr = text.rfind("]")
+        if start_arr != -1 and end_arr != -1 and end_arr > start_arr:
+            return text[start_arr : end_arr + 1].strip()
+
+        return text
+
 
     # -----------------------------------------------------
     # Core Text Generation
@@ -61,34 +90,53 @@ class GeminiService:
         response_schema: Optional[dict] = None
     ) -> str:
         """
-        Generate text from Gemini.
-        Raises RateLimitError on quota exhaustion.
+        Generate text from Ollama.
+        Matches GeminiService signature for compatibility.
         """
         try:
-            full_prompt = (
-                f"{system_instruction}\n\n{prompt}"
-                if system_instruction else prompt
-            )
+            # Construct payload
+            messages = []
+            if system_instruction:
+                messages.append({"role": "system", "content": system_instruction})
+            
+            messages.append({"role": "user", "content": prompt})
+            
+            payload = {
+                "model": self.text_model,
+                "prompt": prompt, 
+                "system": system_instruction if system_instruction else "",
+                "stream": False,
+                "options": {
+                    "temperature": settings.GEMINI_TEMPERATURE, 
+                    "num_predict": settings.GEMINI_MAX_TOKENS,
+                }
+            }
 
-            config = self.generation_config.copy()
+            # Handle Schema / JSON Mode
             if response_schema:
-                config["response_mime_type"] = "application/json"
-                config["response_schema"] = response_schema
+                payload["format"] = "json"
+                # Append schema instruction to prompt to ensure adherence
+                schema_str = json.dumps(response_schema, indent=2)
+                payload["prompt"] = f"{prompt}\n\nIMPORTANT: Return ONLY valid JSON matching this schema:\n{schema_str}"
 
-            response = await self.text_model.generate_content_async(
-                full_prompt,
-                generation_config=config
-            )
+            async with httpx.AsyncClient(timeout=settings.OLLAMA_TIMEOUT_TEXT) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json=payload,
+                )
+                response.raise_for_status()
+                result = response.json()
+                response_text = result.get("response", "")
 
-            return response.text
+                if response_schema:
+                    return self._extract_first_json_object(response_text)
+                return response_text
 
+        except httpx.TimeoutException:
+            logger.error(f"Ollama request timeout for model {self.text_model}")
+            raise RateLimitError("Ollama timeout") 
         except Exception as e:
-            msg = str(e).lower()
-            if "429" in msg or "quota" in msg or "resource exhausted" in msg:
-                logger.error(f"Gemini rate limit hit: {e}")
-                raise RateLimitError(str(e))
-
-            logger.error(f"Gemini text generation error: {e}")
+            logger.error(f"Ollama generation error: {e}")
             raise
 
     # -----------------------------------------------------
@@ -98,108 +146,103 @@ class GeminiService:
         self,
         image_data: bytes,
         prompt: str,
-        mime_type: str = "image/jpeg"
+        mime_type: str = "image/jpeg", 
+        response_schema: Optional[dict] = None
     ) -> str:
         """
-        Extract structured information from image using Gemini Vision.
+        Extract structured information from image using Ollama Vision.
         """
         try:
-            image_part = {
-                "mime_type": mime_type,
-                "data": image_data
+            import base64
+            # Convert bytes to base64 string
+            if isinstance(image_data, bytes):
+                b64_image = base64.b64encode(image_data).decode('utf-8')
+            else:
+                b64_image = image_data 
+
+            payload = {
+                "model": self.vision_model,
+                "prompt": prompt,
+                "images": [b64_image],
+                "stream": False,
+                "options": {
+                    "temperature": settings.GEMINI_TEMPERATURE,
+                }
             }
 
-            response = await self.vision_model.generate_content_async(
-                [prompt, image_part],
-                generation_config=self.generation_config
-            )
+            if response_schema:
+                payload["format"] = "json"
+                schema_str = json.dumps(response_schema, indent=2)
+                payload["prompt"] = f"{prompt}\n\nIMPORTANT: Return ONLY valid JSON matching this schema:\n{schema_str}"
 
-            return response.text
+            async with httpx.AsyncClient(timeout=settings.OLLAMA_TIMEOUT_VISION) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json=payload,
+                )
+                response.raise_for_status()
+                result = response.json()
+                response_text = result.get("response", "")
+
+                if response_schema:
+                    return self._extract_first_json_object(response_text)
+                return response_text
 
         except Exception as e:
-            msg = str(e).lower()
-            if "429" in msg or "quota" in msg or "resource exhausted" in msg:
-                logger.error(f"Gemini vision rate limit hit: {e}")
-                raise RateLimitError(str(e))
-
-            logger.error(f"Gemini vision extraction error: {e}")
+            logger.error(f"Ollama vision error: {e}")
             raise
 
     # -----------------------------------------------------
-    # Combined Initial Classification (LANG + USER TYPE)
+    # Compatibility Methods
     # -----------------------------------------------------
     async def classify_initial_message(self, text: str) -> Dict[str, str]:
         """
-        SINGLE Gemini call to:
-        - Detect language (ISO 639-1)
-        - Classify user type (patient | doctor)
+        Specific workflow method - implemented using Ollama
         """
-
+        from pathlib import Path
         try:
-            # Load shared classification prompt
+            # We need to manually load the prompt here since we are inside the class
+            # This logic mimics the original class
             prompt_path = (
                 Path(__file__).parent.parent
                 / "shared_prompts"
                 / "initial_classification.txt"
             )
+            
+            if prompt_path.exists():
+                system_prompt = prompt_path.read_text(encoding="utf-8")
+            else:
+                # Fallback if file not found
+                system_prompt = "Detect language and user type. Return JSON: {\"language\": \"en\", \"user_type\": \"patient\"}"
 
-            system_prompt = prompt_path.read_text(encoding="utf-8")
-
-            # Force JSON output
-            config = self.generation_config.copy()
-            config["response_mime_type"] = "application/json"
-
-            response = await self.text_model.generate_content_async(
-                f"{system_prompt}\n\nUser message:\n{text}",
-                generation_config=config
+            full_prompt = f"User message:\n{text}"
+            
+            # Use generate_text
+            response_json = await self.generate_text(
+                prompt=full_prompt,
+                system_instruction=system_prompt,
+                response_schema={"type": "object"} # Just trigger JSON mode
             )
 
-            cleaned = response.text.strip()
-
-            # Safety cleanup (should not happen in JSON mode, but defensive)
-            if cleaned.startswith("```"):
-                cleaned = (
-                    cleaned.replace("```json", "")
-                    .replace("```", "")
-                    .strip()
-                )
-
-            data = json.loads(cleaned)
-
-            language = data.get("language", settings.DEFAULT_LANGUAGE)
-            user_type = data.get("user_type", "patient")
-
-            # Validate language
-            if language not in settings.SUPPORTED_LANGUAGES:
-                language = settings.DEFAULT_LANGUAGE
-
-            # Validate user type
-            if user_type not in ["patient", "doctor"]:
-                user_type = "patient"
-
-            logger.info(
-                f"Initial classification → language={language}, user_type={user_type}"
-            )
-
+            data = json.loads(response_json)
+            
             return {
-                "language": language,
-                "user_type": user_type
+                "language": data.get("language", "en"),
+                "user_type": data.get("user_type", "patient")
             }
-
-        except RateLimitError:
-            # Bubble up to LangGraph for graceful stop
-            raise
 
         except Exception as e:
             logger.error(f"Initial classification failed: {e}")
             return {
-                "language": settings.DEFAULT_LANGUAGE,
+                "language": "en",
                 "user_type": "patient"
             }
 
-
 # =========================================================
-# Singleton Instance (IMPORTANT)
+# Singleton Instance
 # =========================================================
 
-gemini_service = GeminiService()
+# Expose as 'gemini_service' for backward compatibility with graph.py
+gemini_service = OllamaService()
+# Also expose as generic name
+llm_service = gemini_service

@@ -32,7 +32,7 @@ except Exception as e:
 
 try:
     from app.services.llm_service import gemini_service
-    print("   ✓ LLM service loaded")
+    print("   ✓ LLM service (Ollama) loaded")
 except Exception as e:
     print(f"   ✗ LLM service error: {e}")
     sys.exit(1)
@@ -95,10 +95,24 @@ for yaml_path in yaml_files:
 
 # Test 5: Check environment
 print("\n5. Checking environment...")
-if settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "your_gemini_api_key_here":
-    print(f"   ✓ GEMINI_API_KEY configured ({settings.GEMINI_API_KEY[:10]}...)")
-else:
-    print("   ⚠ GEMINI_API_KEY not configured (set in .env)")
+import httpx
+try:
+    ollama_url = getattr(settings, "OLLAMA_BASE_URL", "http://localhost:11434")
+    print(f"   ✓ OLLAMA_BASE_URL configured: {ollama_url}")
+    
+    # Check connectivity
+    try:
+        response = httpx.get(ollama_url)
+        if response.status_code == 200:
+            print("   ✓ Ollama server is reachable")
+        else:
+             print(f"   ⚠ Ollama server returned status {response.status_code}")
+    except Exception as e:
+        print(f"   ⚠ Could not connect to Ollama: {e}")
+        print("     (Make sure Ollama is running: 'ollama serve')")
+
+except Exception:
+     print("   ⚠ Error checking Ollama settings")
 
 print(f"   ✓ MongoDB URI: {settings.MONGODB_URI}")
 print(f"   ✓ Database: {settings.MONGODB_DATABASE}")

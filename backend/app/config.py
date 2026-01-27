@@ -15,12 +15,21 @@ class Settings(BaseSettings):
     GEMINI_TEMPERATURE: float = 0.7
     GEMINI_MAX_TOKENS: int = 2048
 
-    # Ollama Configuration
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    
+    # Gemini Configuration (Vision)
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_VISION_MODEL: str = "gemini-2.5-flash"
+
+    # Ollama Configuration (Deprecated)
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_TEXT_MODEL: str = "llama3:latest"
+    OLLAMA_TEXT_MODEL: str = "llama3:latest" 
     OLLAMA_VISION_MODEL: str = "llama3.2-vision:latest" 
-    OLLAMA_TIMEOUT_TEXT: float = 300.0   # Increased to 5 minutes for slow CPUs
-    OLLAMA_TIMEOUT_VISION: float = 300.0 # Increased to 5 minutes
+    OLLAMA_TIMEOUT_TEXT: float = 300.0
+    OLLAMA_TIMEOUT_VISION: float = 300.0 
+    OLLAMA_TIMEOUT_TEXT: float = 300.0
+    OLLAMA_TIMEOUT_VISION: float = 300.0
     
     # MongoDB Configuration
     MONGODB_URI: str = "mongodb://localhost:27017"
@@ -47,11 +56,16 @@ class Settings(BaseSettings):
     
     # Pharmacovigilance Configuration
     REQUIRED_FIELDS: list[str] = [
+        "patient_initials",
         "patient_age",
         "patient_gender",
+        "indication", 
+        "prescriber",
         "drug_name",
+        "start_date",
         "symptoms",
-        "timeline"
+        "timeline",
+        "action_taken"
     ]
     COMPLETENESS_THRESHOLD: float = 0.7
     CONFIDENCE_THRESHOLD: float = 0.6

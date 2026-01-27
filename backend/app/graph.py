@@ -339,12 +339,20 @@ async def document_extraction_node(state: NovaState) -> NovaState:
         extraction_schema = {
             "type": "object",
             "properties": {
+                "patient_initials": {"type": "string"},
+                "patient_age": {"type": "string"},
+                "patient_gender": {"type": "string"},
+                "prescriber": {"type": "string"},
+                "indication": {"type": "string"},
                 "drug_name": {"type": "string"},
                 "drug_dosage": {"type": "string"},
                 "drug_frequency": {"type": "string"},
                 "drug_route": {"type": "string"},
+                "start_date": {"type": "string"},
+                "expiry_date": {"type": "string"},
                 "symptoms": {"type": "array", "items": {"type": "string"}},
-                "indication": {"type": "string"},
+                "timeline": {"type": "string"},
+                "action_taken": {"type": "string"},
                 "clinic_name": {"type": "string"},
                 "prescription_date": {"type": "string"}
             }
@@ -369,7 +377,24 @@ async def document_extraction_node(state: NovaState) -> NovaState:
             for key, value in extracted_update.items():
                 # Only update if value is not None, not empty string, and not empty list
                 if value is not None and value != "" and value != []:
-                    current_data[key] = value
+                    # Gender Normalization
+                    if key == "patient_gender" and isinstance(value, str):
+                        val_lower = value.lower().strip()
+                        if val_lower in ["m", "male", "man", "boy"]:
+                            current_data[key] = "male"
+                        elif val_lower in ["f", "female", "woman", "girl"]:
+                            current_data[key] = "female"
+                        elif val_lower in ["o", "other"]:
+                            current_data[key] = "other"
+                        else:
+                            # Keep original if valid, else let Pydantic decide (or set None)
+                            if val_lower in ["male", "female", "other"]:
+                                current_data[key] = val_lower
+                            else:
+                                logger.warning(f"Invalid gender extracted: {value}")
+                                current_data[key] = None
+                    else:
+                        current_data[key] = value
             state["extracted_data"] = current_data
             
             # Reset pending image so we don't process it twice
@@ -464,10 +489,10 @@ You must respond with JSON containing:
 2. "extracted_data": Any pharmacovigilance data found in the user's message
 
 For extracted_data, include these fields (use null if not mentioned):
-- drug_name: medicine name
-- drug_dosage: dosage amount
-- symptoms: what they're experiencing  
-- timeline: when symptoms started
+- patient_initials, patient_age, patient_gender
+- indication (why taken), prescriber (who advised)
+- drug_name, drug_dosage, start_date
+- symptoms, timeline (start date of side effect), action_taken
 
 Respond as NOVA with both the conversational response AND extracted data."""
 
@@ -481,12 +506,17 @@ Respond as NOVA with both the conversational response AND extracted data."""
                         "extracted_data": {
                             "type": "object",
                             "properties": {
+                                "patient_initials": {"type": "string"},
+                                "patient_age": {"type": "string"},
+                                "patient_gender": {"type": "string"},
+                                "indication": {"type": "string"},
+                                "prescriber": {"type": "string"},
                                 "drug_name": {"type": "string"},
                                 "drug_dosage": {"type": "string"},
+                                "start_date": {"type": "string"},
                                 "symptoms": {"type": "array", "items": {"type": "string"}},
                                 "timeline": {"type": "string"},
-                                "patient_age": {"type": "string"},
-                                "patient_gender": {"type": "string"}
+                                "action_taken": {"type": "string"}
                             }
                         }
                     },
@@ -558,6 +588,36 @@ Respond as NOVA with both the conversational response AND extracted data."""
                     # But for now, let's just NOT add it if it's None.
                     pass
             
+            # Fallback for Age: If LLM missed it but we needed it
+            if "patient_age" in missing_fields and not current_data.get("patient_age"):
+                import re
+                # Simple heuristic: user might have just typed a number
+                # Find stand-alone numbers 
+                matches = re.findall(r'\b(\d{1,3})\b', last_message)
+                for m in matches:
+                    val = int(m)
+                    if 0 < val < 120:
+                        logger.info(f"Fallback extraction: Found age {val} in user message")
+                        current_data["patient_age"] = val
+                        break
+
+            # Fallback for Patient Initials (Name -> Initials)
+            if "patient_initials" in missing_fields and not current_data.get("patient_initials"):
+                # If the user provided a short name "John Doe", extract initials "J. D."
+                # Heuristic: 2-3 words, capitalized
+                import re
+                name_match = re.search(r'\b([A-Z][a-z]+)\s+([A-Z][a-z]+)\b', last_message)
+                if name_match:
+                     initials = f"{name_match.group(1)[0]}. {name_match.group(2)[0]}."
+                     logger.info(f"Fallback extraction: Derived initials {initials} from name {name_match.group(0)}")
+                     current_data["patient_initials"] = initials
+                elif len(last_message.split()) <= 3 and len(last_message) < 20: 
+                     # Assume short message is the name
+                     parts = last_message.strip().split()
+                     if parts:
+                         initials = "".join([p[0].upper() + "." for p in parts])
+                         current_data["patient_initials"] = initials
+
             state["extracted_data"] = current_data
             logger.info(f"Extracted data: {current_data}")
             

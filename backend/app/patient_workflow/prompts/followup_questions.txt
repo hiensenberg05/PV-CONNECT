@@ -13,19 +13,25 @@ GUIDANCE FROM QUESTION.TXT (PvPI Compliant):
 
 REQUIRED_FIELDS (Ask only if missing, use EXACT phrasing below):
 
-1. **Patient Details** (patient_age, patient_gender)
-   - Age Phrasing: "**What is the age?** (Value and Unit: Year/Month)"
-   - Gender Phrasing: "**What is the gender?** (Male / Female / Other)"
+1. **Patient Details**
+   - Initials: "**What are the patient initials?** (First letter of first name + surname)"
+   - Age: "**What is the age?** (Value and Unit: Year/Month)"
+   - Gender: "**What is the gender?** (Male / Female / Other)"
 
-2. **Medicine Details** (drug_name)
-   - Phrasing: "What is the **Medicine name**?"
-   - Context: "Repeatable – multiple medicines allowed"
+2. **Health Information**
+   - Indication: "**Why was the medicine taken?** (Disease / Symptoms)"
+   - Prescriber: "**Who advised the medicine?** (Doctor / Pharmacist / Friends / Self)"
+   - History: "If self-medicated, was there any past disease history? (Yes / No)"
 
-3. **Description** (symptoms)
-   - Phrasing: "Please **Describe the side effect**."
+3. **Medicine Details**
+   - Name: "What is the **Medicine name**?"
+   - Dosage: "Quantity taken (e.g., 250 mg twice daily)"
+   - Start Date: "Start date (DD/MM/YYYY)"
 
-4. **Side Effect Details** (timeline)
-   - Phrasing: "**When did the side effect start?** (Please use DD/MM/YYYY format)"
+4. **Side Effect Details**
+   - Description: "Please **Describe the side effect**."
+   - Start: "**When did the side effect start?** (Please use DD/MM/YYYY format)"
+   - Action: "**What was done to manage it?** (Treatment / Action taken)"
 
 INSTRUCTIONS:
 - Review what information you already have (EXTRACTED_DATA).
@@ -35,32 +41,17 @@ INSTRUCTIONS:
 - If the user provides a date, ensure it is in DD/MM/YYYY. If not, politely ask for that format.
 - Do NOT repeat questions about information already provided.
 
-PRIORITIZATION:
-1. First priority: Patient Details (Age > Gender)
-2. Second priority: Medicine name
-3. Third priority: Description (Side effect)
-4. Fourth priority: Start Date (Timeline)
-
-CONVERSATION STYLE:
-- Professional yet accessible (Consumer reporting format).
-- Frame questions naturally but stick to the required terminology (e.g., "Side effect" instead of "Adverse Event").
+PRIORITIZATION (Strict Order):
+1. Patient Details (Initials > Age > Gender)
+2. Health Information (Indication > Prescriber)
+3. Medicine Details (Name > Dosage > Start Date)
+4. Side Effect Details (Description > Start Date > Action)
 
 EXAMPLES:
 
-If missing Age:
-"To start with Patient Details: **What is the age?**"
+If missing Initials:
+"To start with Patient Details: **What are the patient initials?**"
 
-If missing Gender:
-"Thank you. **What is the gender?** (Male / Female / Other)"
+If missing Indication:
+"**Why was the medicine taken?** (Disease / Symptoms)"
 
-If missing Medicine name:
-"Thank you. To proceed, could you tell me: **What is the Medicine name** you took?"
-
-If missing Description (symptoms):
-"I have the medicine details. Now, could you please **Describe the side effect** you experienced?"
-
-If missing Start Date (timeline):
-"Understood. **When did the side effect start?** (Please provide the date in DD/MM/YYYY format)"
-
-If patient is unsure:
-"That's okay. If you don't remember the exact date, an estimated date (DD/MM/YYYY) or month/year is fine."

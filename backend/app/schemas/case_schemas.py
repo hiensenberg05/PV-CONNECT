@@ -9,34 +9,44 @@ from datetime import datetime
 class ExtractedData(BaseModel):
     """Structured pharmacovigilance data extracted from conversation"""
     
-    # Drug Information
-    drug_name: Optional[str] = Field(None, description="Brand or generic drug name")
-    drug_dosage: Optional[str] = Field(None, description="Dosage amount (e.g., 500mg)")
-    drug_frequency: Optional[str] = Field(None, description="Frequency (e.g., BID, TID, once daily)")
-    drug_route: Optional[str] = Field(None, description="Route of administration (oral, IV, etc.)")
-    
-    # Adverse Event Information
-    symptoms: Optional[list[str]] = Field(None, description="List of symptoms/adverse events")
-    severity: Optional[Literal["mild", "moderate", "severe", "life-threatening"]] = None
-    timeline: Optional[str] = Field(None, description="When symptoms started (e.g., '2 days after starting medication')")
-    duration: Optional[str] = Field(None, description="How long symptoms lasted")
-    
     # Patient Information
+    patient_initials: Optional[str] = Field(None, description="Patient initials (First + Surname)")
     patient_age: Optional[int] = None
     patient_gender: Optional[Literal["male", "female", "other"]] = None
     patient_weight: Optional[str] = None
     
     # Medical Context
     indication: Optional[str] = Field(None, description="Why the drug was prescribed")
+    prescriber: Optional[str] = Field(None, description="Who advised the medicine (Doctor, Pharmacist, Self, etc.)")
     medical_history: Optional[list[str]] = Field(None, description="Relevant medical history")
     concomitant_medications: Optional[list[str]] = Field(None, description="Other medications being taken")
     
+    # Drug Details (Extended)
+    drug_name: Optional[str] = Field(None, description="Brand or generic drug name")
+    drug_dosage: Optional[str] = Field(None, description="Dosage amount (e.g., 500mg)")
+    drug_frequency: Optional[str] = Field(None, description="Frequency (e.g., BID, TID, once daily)")
+    drug_route: Optional[str] = Field(None, description="Route of administration (oral, IV, etc.)")
+    drug_form: Optional[str] = Field(None, description="Tablet, Capsule, Injection, etc.")
+    expiry_date: Optional[str] = None
+    start_date: Optional[str] = None
+    stop_date: Optional[str] = None
+    
+    # Adverse Event Information
+    symptoms: Optional[list[str]] = Field(None, description="List of symptoms/adverse events")
+    severity: Optional[Literal["mild", "moderate", "severe", "life-threatening"]] = None
+    timeline: Optional[str] = Field(None, description="When symptoms started")
+    is_continuing: Optional[str] = Field(None, description="Yes/No if side effect is continuing")
+    
     # Outcome
     outcome: Optional[Literal["recovered", "recovering", "not_recovered", "fatal", "unknown"]] = None
-    action_taken: Optional[str] = Field(None, description="What action was taken (stopped drug, dose reduced, etc.)")
+    action_taken: Optional[str] = Field(None, description="What was done to manage it")
     
-    # Additional Context
-    reporter_relationship: Optional[str] = Field(None, description="Relationship to patient (self, parent, doctor, etc.)")
+    # Reporter Details
+    reporter_name: Optional[str] = None
+    reporter_address: Optional[str] = None
+    reporter_contact: Optional[str] = None
+    
+    # Additional
     clinic_name: Optional[str] = None
     prescription_date: Optional[str] = None
 

@@ -1,0 +1,16 @@
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_VERIFY_TOKEN=your_secret
+
+# MongoDB
+MONGODB_URI=
+MONGODB_DATABASE=
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+GROQ_API_KEY=
+GEMINI_API_KEY=
+ASSEMBLY_API_KEY=
+# llama-3.3-70b-versatile for textual task  gemini 2.5 flash for ocr task (maybe replaced with some non api model later) and assembly ai for stt tasks only 

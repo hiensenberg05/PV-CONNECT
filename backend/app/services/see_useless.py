@@ -1,3 +1,12 @@
+# backend/app/services/see_useless.py
+"""
+Service to check if text input is useful for filling missing fields.
+Uses LLM to make the determination.
+"""
+
+from app.services.llm_service import get_model
+
+
 SEE_USELESS_SYSTEM_PROMPT = (
     "You are a Pharmacovigilance Information Checker.\n\n"
     "Your task is to decide whether the given text is USELESS for filling missing information.\n\n"
@@ -21,9 +30,18 @@ SEE_USELESS_SYSTEM_PROMPT = (
 )
 
 
-from services.llm_service import get_model
-
 def see_useless_yes(text: str, missing: list) -> bool:
+    """
+    Check if text is useless for filling missing fields.
+
+    Args:
+        text: Input text to check
+        missing: List of missing field names
+
+    Returns:
+        True if text is useless (contains no relevant info)
+        False if text is useful (contains at least one relevant field)
+    """
     # Empty text or nothing missing = useless
     if not text or not missing:
         return True

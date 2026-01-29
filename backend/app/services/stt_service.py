@@ -1,4 +1,5 @@
-from services.llm_service import get_model
+import assemblyai as aai
+import os
 
 
 def run_voice_on_state(state: dict, file_path: str) -> dict:
@@ -11,22 +12,22 @@ def run_voice_on_state(state: dict, file_path: str) -> dict:
         state["current_voice_data"]
     """
 
-    client, model = get_model("whisper-large-v3")
+    aai.settings.api_key = os.getenv("ASSEMBLY_API_KEY") 
+    transcriber = aai.Transcriber()
+    transcript = transcriber.transcribe(file_path)
 
-    with open(file_path, "rb") as audio:
-        transcription = client.audio.transcriptions.create(
-            file=audio,
-            model=model
-        )
+    text = transcript.text
 
-    text = transcription.text.strip()
+    if transcript.status == aai.TranscriptStatus.error:
+        print(f"Transcription failed: {transcript.error}")
+        text = ""
 
     state["current_voice_data"] = {
         "transcript": text,
         "entities": {
             "raw_voice_text": text
         },
-        "confidence": 0.9 if len(text) > 10 else 0.2
+        "confidence": transcript.confidence if transcript.confidence else 0.0
     }
 
     return state

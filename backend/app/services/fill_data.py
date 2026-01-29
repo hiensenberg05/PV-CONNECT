@@ -1,3 +1,13 @@
+# backend/app/services/fill_data.py
+"""
+Service to extract data from text and fill missing fields.
+Uses LLM for extraction.
+"""
+
+import json
+from app.services.llm_service import get_model
+
+
 FILL_MISSING_SYSTEM_PROMPT = (
     "You are a Pharmacovigilance Information Extraction Assistant.\n\n"
     "Your task is to extract missing information from a given text.\n\n"
@@ -19,15 +29,25 @@ FILL_MISSING_SYSTEM_PROMPT = (
 )
 
 
-from services.llm_service import get_model
-import json
-
 def fill_data_remove_missing(state: dict) -> dict:
+    """
+    Extract data from state['to_use'] and update extracted_data/missing.
+
+    Args:
+        state: Conversation state with:
+            - to_use: Combined useful text
+            - missing: List of missing field names
+            - extracted_data: Dict of already extracted data
+
+    Returns:
+        Updated state with new extractions added to extracted_data
+        and fields removed from missing.
+    """
     to_use = state.get("to_use", "")
     missing = state.get("missing", [])
     extracted_data = state.get("extracted_data", {})
 
-    # nothing to do
+    # Nothing to do
     if not to_use or not missing:
         return state
 
@@ -60,13 +80,19 @@ def fill_data_remove_missing(state: dict) -> dict:
 
     raw_output = response.choices[0].message.content.strip()
 
+    # Parse JSON - handle markdown code blocks
+    if raw_output.startswith("```"):
+        # Remove markdown code block
+        lines = raw_output.split("\n")
+        raw_output = "\n".join(lines[1:-1])
+
     try:
         new_data = json.loads(raw_output)
     except Exception:
-        # model misbehaved → do nothing
+        # Model misbehaved → do nothing
         return state
 
-    # update extracted_data
+    # Update extracted_data and remove from missing
     for key, value in new_data.items():
         if key in missing and value:
             extracted_data[key] = value

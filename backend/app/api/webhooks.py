@@ -1,44 +1,56 @@
-from fastapi import APIRouter
-from typing import Dict
-from uuid import uuid4
+from fastapi import APIRouter, HTTPException
 from app.schemas.message import MessageIn, MessageOut
-from app.schemas.conversation_state import ConversationState
-from app.workflows.router import route_message
+from app.workflows.keep_workflow import process_message
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# DUMMY IN-MEMORY STORE FOR TESTING
-SESSIONS: Dict[str, ConversationState] = {}
 
 @router.post("/webhook", response_model=MessageOut)
 async def whatsapp_webhook(message: MessageIn):
     """
-    Simulate WhatsApp webhook entry point.
+    Unified webhook entry point using the new keep_workflow engine.
+    Adapts MessageIn schema to process_message arguments.
     """
-    # 1. Retrieve State
-    state = SESSIONS.get(message.phone_number)
-    
-    # 2. Route Message (Passing None triggers auto-init in router)
-    response, actions, new_state = route_message(message, state)
-    
-    # 3. MOCK SERVICE EXECUTION (Glue Code)
-    # In production, these actions go to a queue.
-    # Here, we execute critical ones immediately to allow the flow to proceed.
-    
-    for action in actions:
-        print(f"Action Emitted: {action.action_type} Payload: {action.payload}")
+    try:
+        logger.info(f"Webhook received from {message.phone_number} type={message.message_type}")
         
-        if action.action_type == "GENERATE_CASE_ID":
-            # Mock Case ID generation
-            if not new_state.case_id:
-                new_state.case_id = uuid4()
-                print(f"DEBUG: Generated Case ID {new_state.case_id}")
+        # 1. Map Schema to Workflow Arguments
+        text_content = message.text_content
+        doc_id = None
+        voice_id = None
         
-        elif action.action_type == "SAVE_STATE":
-            # State is saved at the end of this function anyway
-            pass
+        if message.message_type == "image":
+            doc_id = message.image_media_id
+        elif message.message_type == "document":
+            doc_id = message.document_media_id
+        elif message.message_type == "audio":
+            voice_id = message.audio_media_id
             
-    # 4. Save State
-    SESSIONS[message.phone_number] = new_state
-    
-    return response
+        # 2. Process via Workflow Engine
+        result = await process_message(
+            phone_number=message.phone_number,
+            text_content=text_content,
+            doc_id=doc_id,
+            voice_id=voice_id
+        )
+        
+        # 3. Format Response
+        reply_text = result.get("reply", "Sorry, I couldn't process that.")
+        state = result.get("state", {})
+        
+        return MessageOut(
+            text=reply_text,
+            language=state.get("language", "en"),
+            requires_input=True,
+            metadata={"state_id": state.get("case_id")}
+        )
+        
+    except Exception as e:
+        logger.error(f"Webhook error: {str(e)}")
+        # Return safe fallback to prevent retries loop from WhatsApp
+        return MessageOut(
+            text="Sorry, a technical error occurred. Please try again later.",
+            requires_input=False
+        )

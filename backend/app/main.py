@@ -17,6 +17,7 @@ from app.services.ocr_service import extract_text_from_image
 from app.services.stt_service import transcribe_audio
 from app.workflows.cache_store import get_state, clear_all_states
 from app.api.webhooks import router as webhook_router
+from app.analytics.vigigrade import router as vigigrade_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -350,6 +351,9 @@ async def admin_clear_all_states():
 
 # WhatsApp webhook router (if using WhatsApp Business API)
 app.include_router(webhook_router, tags=["webhooks"])
+
+# VigiGrade analytics router for confidence scoring and signal detection
+app.include_router(vigigrade_router)
 
 
 # ============================================

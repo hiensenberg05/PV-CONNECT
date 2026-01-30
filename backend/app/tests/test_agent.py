@@ -1,4 +1,4 @@
-from app.agents.pv_followup_agent import run_pv_followup_agent
+from agents.pv_followup_agent import run_pv_followup_agent
 
 def run_test(title, state):
     print("\n" + "="*80)
@@ -341,7 +341,8 @@ state_doctor_2 = {
 state_patient_3 = {
     "case_id": "CASE_P3",
     "user_type": "patient",
-    "current_message": "mujhe bawasir hai baitha bhi nhi jaata. Prescription nahi hai tum manually puch lo",
+    # "current_message": "mujhe bawasir hai baitha bhi nhi jaata. Prescription nahi hai tum manually puch lo",
+    "current_message": "আমার অর্শরোগ আছে।",
     "chat_history": [
         {"role": "user", "content": "maine kal dawai li thi"},
         {

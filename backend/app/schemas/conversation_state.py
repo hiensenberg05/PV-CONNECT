@@ -42,6 +42,53 @@ DEFAULT_EXTRACTED_DATA = {
     "management_action_taken": None
 }
 
+# CRITICAL: Section-based field grouping
+# This ensures we ask for ONE section at a time, preventing LLM confusion
+SECTIONS_ORDER = [
+    # Section 1: Patient Demographics
+    [
+        "patient_name",
+        "patient_gender",
+        "patient_age_value",
+        "patient_age_unit"
+    ],
+    # Section 2: Health Background
+    [
+        "reason_for_medicine",
+        "medicine_advised_by",
+        "self_medicated",
+        "past_disease_history"
+    ],
+    # Section 3: Medicine Details
+    [
+        "medicine_name",
+        "medicine_quantity_taken",
+        "medicine_dosage_form",
+        "medicine_expiry_date",
+        "medicine_start_date",
+        "medicine_stop_date"
+    ],
+    # Section 4: Side Effect Timeline
+    [
+        "side_effect_start_date",
+        "side_effect_continuing",
+        "side_effect_stop_date"
+    ],
+    # Section 5: Severity Assessment
+    [
+        "severity_no_daily_activity_effect",
+        "severity_affected_daily_activity",
+        "severity_hospitalized",
+        "severity_death",
+        "severity_other"
+    ],
+    # Section 6: Clinical Details
+    [
+        "side_effect_description",
+        "management_action_taken"
+    ]
+]
+
 # Default missing list (all keys that need to be collected)
 DEFAULT_MISSING = [
     "patient_name",
@@ -114,6 +161,9 @@ class ConversationState(BaseModel):
     case_complete: bool = False
     language: str = "en"
     followup_msg: Optional[str] = None
+    
+    # NEW: Track current section being collected
+    current_section_index: int = 0
 
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)

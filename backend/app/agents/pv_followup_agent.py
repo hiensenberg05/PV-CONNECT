@@ -1,18 +1,11 @@
 # backend/app/agents/pv_followup_agent.py
 """
-PV Follow-up Agent.
-Restored logic with strict input validation using see_useless.
-
-This agent is called AFTER workflow handles:
-- User type detection
-- Initial doctor verification check
-
-Agent responsibilities:
-1. Process media (OCR for docs, STT for voice)
-2. Validate input usefulness via see_useless
-3. Extract data from useful inputs only
-4. Populate problems list for useless inputs
-5. Generate follow-up question via LLM
+PV Follow-up Agent - FIXED VERSION
+Key improvements:
+1. Proper problems list reset
+2. Better validation logic
+3. Language detection
+4. Cleaner state management
 """
 
 from app.services.load_data import download_media
@@ -23,13 +16,43 @@ from app.services.fill_data import fill_data_remove_missing
 from app.utils.context_builder import build_llm_messages
 
 
+def _detect_language(text: str) -> str:
+    """
+    Simple language detection - checks for Hindi/Hinglish patterns.
+    Returns 'hi' for Hindi/Hinglish, 'en' for English.
+    """
+    if not text:
+        return "en"
+    
+    # Common Hindi/Hinglish words
+    hindi_markers = [
+        'mujhe', 'mera', 'mere', 'hain', 'hai', 'kya', 'kaise', 'kaun',
+        'aap', 'tum', 'main', 'hum', 'ye', 'wo', 'nahi', 'haan',
+        'dawai', 'dawa', 'goli', 'tablet', 'bukhar', 'dard', 'pet'
+    ]
+    
+    text_lower = text.lower()
+    hindi_count = sum(1 for marker in hindi_markers if marker in text_lower)
+    
+    return "hi" if hindi_count >= 2 else "en"
+
+
 def run_pv_followup_agent(state: dict) -> dict:
     """
-    LLM-FIRST agent with strict validation logic.
-    Python does minimal decision making beyond usefulness checks.
+    IMPROVED agent with better state management and validation.
     """
+    
+    # ALWAYS initialize problems at the start
+    if "problems" not in state:
+        state["problems"] = []
 
     user_type = state.get("user_type")
+    
+    # Detect and update language
+    curr_msg = state.get("current_message", "")
+    if curr_msg:
+        detected_lang = _detect_language(curr_msg)
+        state["language"] = detected_lang
 
     # =========================================
     # DOCTOR FLOW
@@ -39,7 +62,6 @@ def run_pv_followup_agent(state: dict) -> dict:
         # Unverified doctor - handle license submission
         if not state.get("verified_doctor"):
             if state.get("doc_id"):
-                # Doctor sent a document (license)
                 try:
                     media = download_media(state["doc_id"])
                     state = run_ocr_on_state(state, media["file_path"])
@@ -62,73 +84,82 @@ def run_pv_followup_agent(state: dict) -> dict:
         
         # Verified Doctor - Normal data collection flow
         elif state.get("verified_doctor") is True:
+            # RESET problems list for this turn
+            state["problems"] = []
+            
             # Process Media
             if state.get("doc_id"):
                 try:
                     media = download_media(state["doc_id"])
                     state = run_ocr_on_state(state, media["file_path"])
-                except Exception:
-                    pass
+                except Exception as e:
+                    state["problems"].append(f"Error processing document: {str(e)}")
             
             if state.get("voice_id"):
                 try:
                     media = download_media(state["voice_id"])
                     state = run_voice_on_state(state, media["file_path"])
-                except Exception:
-                    pass
+                except Exception as e:
+                    state["problems"].append(f"Error processing voice: {str(e)}")
 
             # Check Usefulness of each input
             missing = state.get("missing", [])
-            text_use = see_useless_yes(state.get("current_message", ""), missing)
-            photo_use = see_useless_yes(state.get("current_doc_data", {}).get("raw_text", ""), missing)
-            voice_use = see_useless_yes(state.get("current_voice_data", {}).get("transcript", ""), missing)
-            
-            problems = []
             to_use = []
 
             # Text validation
-            if text_use is True and state.get("current_message", ""):
-                problems.append("The message does not contain relevant clinical information.")
-            else:
-                msg = state.get("current_message", "")
-                if msg:
-                    to_use.append(msg)
+            if state.get("current_message"):
+                text_use = see_useless_yes(state["current_message"], missing)
+                if text_use is True:
+                    state["problems"].append("The message does not contain relevant clinical information.")
+                else:
+                    to_use.append(state["current_message"])
 
             # Photo validation
-            if photo_use is True and state.get("doc_id"):
-                problems.append("The document does not contain useful clinical data.")
-            else:
+            if state.get("doc_id"):
                 doc_text = state.get("current_doc_data", {}).get("raw_text", "")
                 if doc_text:
-                    to_use.append(doc_text)
-                    if "doc_all" not in state:
-                        state["doc_all"] = []
-                    state["doc_all"].append(doc_text)
+                    photo_use = see_useless_yes(doc_text, missing)
+                    if photo_use is True:
+                        state["problems"].append("The document does not contain useful clinical data.")
+                    else:
+                        to_use.append(doc_text)
+                        if "doc_all" not in state:
+                            state["doc_all"] = []
+                        state["doc_all"].append(doc_text)
 
             # Voice validation
-            if voice_use is True and state.get("voice_id"):
-                problems.append("The voice message was unclear or irrelevant.")
-            else:
+            if state.get("voice_id"):
                 voice_text = state.get("current_voice_data", {}).get("transcript", "")
                 if voice_text:
-                    to_use.append(voice_text)
-                    if "voice_all" not in state:
-                        state["voice_all"] = []
-                    state["voice_all"].append(voice_text)
+                    voice_use = see_useless_yes(voice_text, missing)
+                    if voice_use is True:
+                        state["problems"].append("The voice message was unclear or irrelevant.")
+                    else:
+                        to_use.append(voice_text)
+                        if "voice_all" not in state:
+                            state["voice_all"] = []
+                        state["voice_all"].append(voice_text)
             
-            state["problems"] = problems
             state["to_use"] = " ".join(to_use)
             
             # Extract data and generate response
             state = fill_data_remove_missing(state)
             
+            # Update chat history - store ONLY user content, not assistant responses
             if "chat_history" not in state:
                 state["chat_history"] = []
-            state["chat_history"].append({"role": "user", "content": state["to_use"]})
             
-            messages = build_llm_messages(state)
-            state["chat_history"].append({"role": "assistant", "content": messages})
-            state["followup_msg"] = messages
+            if state["to_use"]:
+                state["chat_history"].append({"role": "user", "content": state["to_use"]})
+            
+            # Generate follow-up
+            followup = build_llm_messages(state)
+            
+            # Only store assistant message if it's an actual question
+            if followup and followup != "NO_FOLLOWUP":
+                state["chat_history"].append({"role": "assistant", "content": followup})
+            
+            state["followup_msg"] = followup
             
             return state
 
@@ -136,74 +167,88 @@ def run_pv_followup_agent(state: dict) -> dict:
     # PATIENT FLOW
     # =========================================
     elif user_type == "patient":
+        # RESET problems list for this turn
+        state["problems"] = []
+        
         # Process Media
         if state.get("doc_id"):
             try:
                 media = download_media(state["doc_id"])
                 state = run_ocr_on_state(state, media["file_path"])
-            except Exception:
-                pass
+            except Exception as e:
+                state["problems"].append(f"Error processing document: {str(e)}")
         
         if state.get("voice_id"):
             try:
                 media = download_media(state["voice_id"])
                 state = run_voice_on_state(state, media["file_path"])
-            except Exception:
-                pass
+            except Exception as e:
+                state["problems"].append(f"Error processing voice: {str(e)}")
 
         # Check Usefulness of each input
-        missing = state.get("missing") if state.get("missing") else []
-        
-        text_use = see_useless_yes(state.get("current_message", ""), missing)
-        photo_use = see_useless_yes(state.get("current_doc_data", {}).get("raw_text", ""), missing)
-        voice_use = see_useless_yes(state.get("current_voice_data", {}).get("transcript", ""), missing)
-        
-        problems = []
+        missing = state.get("missing", [])
         to_use = []
 
         # Text validation
-        if text_use is True and state.get("current_message", ""):
-            problems.append("Aapke message mein kuch useful information nahi hai.")
-        else:
-            msg = state.get("current_message", "")
-            if msg:
-                to_use.append(msg)
+        if state.get("current_message"):
+            text_use = see_useless_yes(state["current_message"], missing)
+            if text_use is True:
+                lang = state.get("language", "en")
+                msg = "Aapke message mein kuch useful information nahi hai." if lang == "hi" else "Your message doesn't contain useful information."
+                state["problems"].append(msg)
+            else:
+                to_use.append(state["current_message"])
 
         # Photo validation
-        if photo_use is True and state.get("doc_id"):
-            problems.append("Aapke photo/document mein kuch useful information nahi hai.")
-        else:
+        if state.get("doc_id"):
             doc_text = state.get("current_doc_data", {}).get("raw_text", "")
             if doc_text:
-                to_use.append(doc_text)
-                if "doc_all" not in state:
-                    state["doc_all"] = []
-                state["doc_all"].append(doc_text)
+                photo_use = see_useless_yes(doc_text, missing)
+                if photo_use is True:
+                    lang = state.get("language", "en")
+                    msg = "Aapke photo/document mein kuch useful information nahi hai." if lang == "hi" else "Your document doesn't contain useful information."
+                    state["problems"].append(msg)
+                else:
+                    to_use.append(doc_text)
+                    if "doc_all" not in state:
+                        state["doc_all"] = []
+                    state["doc_all"].append(doc_text)
 
         # Voice validation
-        if voice_use is True and state.get("voice_id"):
-            problems.append("Aapke voice message mein kuch useful information nahi hai.")
-        else:
+        if state.get("voice_id"):
             voice_text = state.get("current_voice_data", {}).get("transcript", "")
             if voice_text:
-                to_use.append(voice_text)
-                if "voice_all" not in state:
-                    state["voice_all"] = []
-                state["voice_all"].append(voice_text)
+                voice_use = see_useless_yes(voice_text, missing)
+                if voice_use is True:
+                    lang = state.get("language", "en")
+                    msg = "Aapke voice message mein kuch useful information nahi hai." if lang == "hi" else "Your voice message wasn't clear."
+                    state["problems"].append(msg)
+                else:
+                    to_use.append(voice_text)
+                    if "voice_all" not in state:
+                        state["voice_all"] = []
+                    state["voice_all"].append(voice_text)
 
-        state["problems"] = problems
         state["to_use"] = " ".join(to_use)
 
         # Extract data and generate response
         state = fill_data_remove_missing(state)
         
+        # Update chat history
         if "chat_history" not in state:
             state["chat_history"] = []
-        state["chat_history"].append({"role": "user", "content": state["to_use"]})
         
-        messages = build_llm_messages(state)
-        state["chat_history"].append({"role": "assistant", "content": messages})
-        state["followup_msg"] = messages
+        if state["to_use"]:
+            state["chat_history"].append({"role": "user", "content": state["to_use"]})
+        
+        # Generate follow-up
+        followup = build_llm_messages(state)
+        
+        # Only store assistant message if it's an actual question
+        if followup and followup != "NO_FOLLOWUP":
+            state["chat_history"].append({"role": "assistant", "content": followup})
+        
+        state["followup_msg"] = followup
 
         return state
     

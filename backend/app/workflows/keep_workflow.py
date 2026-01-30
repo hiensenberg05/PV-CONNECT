@@ -1,7 +1,13 @@
 # backend/app/workflows/keep_workflow.py
 """
-Main workflow orchestrator.
+Main workflow orchestrator - FIXED VERSION
 Uses cache for fast state, DB verification for doctors, async license check.
+
+FIXES:
+1. Removed unused imports
+2. Removed redundant problems reset
+3. Added doctor verification edge case handling
+4. Better error handling
 
 Flow:
 1. Receive message from WhatsApp
@@ -25,7 +31,7 @@ from .asynchronous_licensecheck import check_verification_status
 from .state_save import save_state
 
 from app.agents.pv_followup_agent import run_pv_followup_agent
-from app.schemas.conversation_state import ConversationState, DEFAULT_EXTRACTED_DATA, DEFAULT_MISSING
+from app.schemas.conversation_state import ConversationState
 
 
 def create_initial_state(phone_number: str, user_type: str) -> Dict[str, Any]:
@@ -52,8 +58,10 @@ def reset_per_turn_keys(state: Dict[str, Any]) -> Dict[str, Any]:
     state["voice_id"] = None
     state["current_doc_data"] = {}
     state["current_voice_data"] = {}
-    state["problems"] = []
     state["to_use"] = ""
+    # Initialize problems if not exists (will be populated by agent)
+    if "problems" not in state:
+        state["problems"] = []
     return state
 
 
@@ -83,6 +91,7 @@ async def process_message(
         else:
             # User replied with type - create state
             state = create_initial_state(phone_number, user_type)
+            set_state(phone_number, state)  # SAVE STATE
 
     # Step 3: Doctor verification flow
     if state.get("user_type") == "doctor":
@@ -113,19 +122,37 @@ async def process_message(
             elif doc_id and not state.get("license_id"):
                 # New doctor sent license image - add to DB as pending
                 state["license_id"] = doc_id
-                doctor_id = await add_doctor_pending_verification(
-                    phone_number=phone_number,
-                    license_id=doc_id
-                )
-                state["doctor_id"] = doctor_id
-                state["verified_doctor"] = True  # Allow chat to continue
-                state["human_verified"] = False  # Pending human review
+                try:
+                    doctor_id = await add_doctor_pending_verification(
+                        phone_number=phone_number,
+                        license_id=doc_id
+                    )
+                    state["doctor_id"] = doctor_id
+                    state["verified_doctor"] = True  # Allow chat to continue
+                    state["human_verified"] = False  # Pending human review
+                except Exception as e:
+                    # If doctor registration fails, ask to try again
+                    set_state(phone_number, state)  # SAVE STATE
+                    return {
+                        "reply": "Error registering license. Please try uploading again.",
+                        "state": state
+                    }
 
             elif state.get("verification_id"):
                 # Check if async verification completed
                 status = await check_verification_status(phone_number)
                 if status["verified"]:
                     state["human_verified"] = True
+                    state["verified_doctor"] = True
+            
+            else:
+                # FIX: No verification path matched - ask for license
+                # This handles: not in DB, no doc_id sent, no verification_id
+                set_state(phone_number, state)  # SAVE STATE
+                return {
+                    "reply": "Please upload your medical license ID to verify your identity.",
+                    "state": state
+                }
 
     # Step 4: Update per-turn data
     state = reset_per_turn_keys(state)
@@ -134,18 +161,32 @@ async def process_message(
     state["voice_id"] = voice_id
 
     # Step 5: Run the agent
-    state = run_pv_followup_agent(state)
+    try:
+        state = run_pv_followup_agent(state)
+    except Exception as e:
+        import traceback
+        print(f"[keep_workflow] Agent error: {str(e)}")
+        traceback.print_exc()
+        # Return a safe fallback
+        return {
+            "reply": "Sorry, there was an error processing your message. Please try again.",
+            "state": state
+        }
 
     # Step 6: Save state to cache
     set_state(phone_number, state)
 
     # Step 7: If case complete, save to MongoDB
     if state.get("case_complete") is True:
-        await save_state(state)  # Persist to DB
-        delete_state(phone_number)  # Clear cache
+        try:
+            await save_state(state)  # Persist to DB
+            delete_state(phone_number)  # Clear cache
+        except Exception as e:
+            print(f"[keep_workflow] Error saving state: {str(e)}")
+            # Don't clear cache if save failed - allows retry
 
     # Step 8: Return reply
     return {
-        "reply": state.get("followup_msg", ""),
+        "reply": state.get("followup_msg", "Thank you for your message."),
         "state": state
     }

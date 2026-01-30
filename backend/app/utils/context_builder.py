@@ -1,7 +1,7 @@
 # backend/app/utils/context_builder.py
 """
 Context builder for LLM messages.
-Handles Patient and Doctor flows with proper prompting.
+Handles Patient and Doctor flows with proper prompting and section-based progression.
 """
 
 import os
@@ -10,7 +10,6 @@ from app.services.llm_service import get_model
 
 def _load_text_file(path: str) -> str:
     """Load text file from the data directory."""
-    # Handle relative paths from app directory
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     full_path = os.path.join(base_dir, path)
     
@@ -20,20 +19,83 @@ def _load_text_file(path: str) -> str:
         return f.read()
 
 
+def _get_current_section_missing(state: dict) -> list:
+    """
+    Get missing fields (simplified - no section gating).
+    Returns all missing fields.
+    """
+    return state.get("missing", [])
+
+
+def _format_field_names_for_display(field_list: list) -> str:
+    """
+    Convert technical field names to human-readable questions.
+    """
+    field_map = {
+        "patient_name": "Patient's name",
+        "patient_gender": "Patient's gender",
+        "patient_age_value": "Patient's age",
+        "patient_age_unit": "Age unit (years/months/days)",
+        "reason_for_medicine": "Reason for taking medicine",
+        "medicine_advised_by": "Who advised the medicine",
+        "self_medicated": "Whether self-medicated",
+        "past_disease_history": "Past medical history",
+        "medicine_name": "Medicine name",
+        "medicine_quantity_taken": "Quantity taken",
+        "medicine_dosage_form": "Dosage form (tablet/syrup/injection)",
+        "medicine_expiry_date": "Medicine expiry date",
+        "medicine_start_date": "When medicine was started",
+        "medicine_stop_date": "When medicine was stopped",
+        "side_effect_start_date": "When side effect started",
+        "side_effect_continuing": "Is side effect continuing",
+        "side_effect_stop_date": "When side effect stopped",
+        "severity_no_daily_activity_effect": "Did it affect daily activities",
+        "severity_affected_daily_activity": "How daily activities were affected",
+        "severity_hospitalized": "Was patient hospitalized",
+        "severity_death": "Did it result in death",
+        "severity_other": "Other severity details",
+        "side_effect_description": "Detailed description of side effect",
+        "management_action_taken": "What action was taken"
+    }
+    
+    return ", ".join([field_map.get(f, f) for f in field_list])
+
+
+def _build_concise_chat_history(chat_history: list, max_turns: int = 3) -> str:
+    """
+    Build a concise summary of recent chat history.
+    Only keep last N turns to prevent context pollution.
+    """
+    if not chat_history:
+        return "No previous conversation."
+    
+    # Keep only last max_turns exchanges
+    recent = chat_history[-max_turns*2:] if len(chat_history) > max_turns*2 else chat_history
+    
+    formatted = []
+    for msg in recent:
+        role = msg.get("role", "unknown")
+        content = msg.get("content", "")
+        if role == "user":
+            formatted.append(f"User said: {content}")
+        elif role == "assistant":
+            formatted.append(f"You asked: {content}")
+    
+    return "\n".join(formatted)
+
+
 def build_llm_messages(state: dict) -> str:
     """
-    FINAL WhatsApp-first context builder.
-    Handles:
-    - Patient flow
-    - Doctor flow with STRICT verification
-    - Useless document / voice handling
-    - Short, human replies only
+    Improved context builder with:
+    - Section-based progression
+    - Clear memory management
+    - Reduced hallucination
     """
 
     user_type = state.get("user_type")
     curr_msg = state.get("current_message", "")
     to_use = state.get("to_use", "")
-    missing_info = state.get("missing", [])
+    all_missing = state.get("missing", [])
     already = state.get("extracted_data", {})
     prev_msgs = state.get("chat_history", [])
     problems = state.get("problems", [])
@@ -41,92 +103,78 @@ def build_llm_messages(state: dict) -> str:
     LANGUAGE = state.get("language", "en")
 
     # Case complete check
-    if missing_info == []:
+    if not all_missing:
         state["case_complete"] = True
-        message = "Thank you! All the required information has been received. Your case has been successfully saved."
-        return message
+        if user_type == "patient":
+            return "धन्यवाद! सभी जानकारी मिल गई है। आपका केस सफलतापूर्वक सेव हो गया है।" if LANGUAGE == "hi" else "Thank you! All information received. Your case has been saved successfully."
+        else:
+            return "Thank you. All required clinical information has been collected. Case submitted successfully."
 
-    # Load rules
-    patient_rules = _load_text_file("data/pv_patient.txt")
-    doctor_rules = _load_text_file("data/pv_doctor.txt")
+    # CRITICAL: Get only current section's missing fields
+    target_missing = _get_current_section_missing(state)
+    
+    # Build concise history
+    concise_history = _build_concise_chat_history(prev_msgs, max_turns=3)
+    
+    # Format fields for display
+    readable_missing = _format_field_names_for_display(target_missing)
 
     client, model = get_model()
 
     if user_type == "patient":
         SYSTEM_PROMPT = (
-            "You are a Pharmacovigilance Follow-Up Assistant. Your goal is to collect medical safety data by acting like a friendly, helpful friend. "
-            "Use very simple language and remain empathetic.\n\n"
-
-            "You will be provided with:\n"
-            "- curr_msg: The current user message\n"
-            "- already: Extracted data collected so far\n"
-            "- to_use: Useful information extracted from the current input to fill gaps\n"
-            "- missing_info: Mandatory fields still needed\n"
-            "- prev_msgs: Previous chat history\n"
-            "- problems: Irrelevant or useless input (blurry photos, off-topic text, unclear audio)\n"
-            "- has_given_doc: Boolean (True if a prescription/report was already provided)\n"
-            "- LANGUAGE: The primary language detected from the user.\n\n"
-
-            "Follow these steps strictly:\n\n"
-
-            "STEP 1: Classify the message into GREETING, QUESTION, or STATEMENT.\n\n"
-
-            "STEP 2: Address Problems (ONLY IF PRESENT)\n"
-            "- If the {problems} list is NOT empty, start your message by addressing these issues.\n"
-            "- Use the exact content from the {problems} list to tell the user what went wrong.\n"
-            "- If {problems} is empty, SKIP this step entirely.\n\n"
-
-            "STEP 3A: IF the message is a GREETING (e.g., 'hi', 'hello', 'hey'):\n"
-            "- Respond warmly AND IMMEDIATELY ask for the first missing mandatory fields from {missing_info}.\n"
-            "- Example: 'Hello! I'm here to help. Could you please tell me your name, age, and gender?'\n"
-            "- NEVER respond with just a greeting. ALWAYS include a question about missing fields.\n\n"
-
-            "STEP 3B: IF the message is a QUESTION:\n"
-            "- Answer using ONLY {already} and {prev_msgs}. Do NOT ask follow-up questions. Do NOT provide medical advice.\n\n"
-
-            "STEP 3C: IF the message is a STATEMENT (or after greeting/problem handling):\n"
-            "1. CRITICAL: NEVER ask for fields already present in {already}. Only ask for fields in {missing_info}.\n"
-            "2. CATEGORY GROUPING:\n"
-            "   - Combine all date-related info (Start date, Stop date, Onset date) into one sentence.\n"
-            "   - Combine all event-related info (Side effect description, Action taken, Outcome) into another.\n"
-            "3. PRESCRIPTION PROTOCOL:\n"
-            "   - If {has_given_doc} is False AND the user has NOT already said (in {curr_msg} or {prev_msgs}) that they do not have a document, you MAY ask for a photo of the prescription ONCE.\n"
-            "   - If the user says they don't have documents, NEVER ask again.\n\n"
-
-            "STEP 4: Completion\n"
-            "- If {missing_info} is empty AND ({has_given_doc} is True OR user explicitly said they have no doc), "
-            "respond exactly with: NO_FOLLOWUP\n\n"
-
-            "STEP 5: Language Adaptation (MANDATORY)\n"
-            "- You MUST respond in the SAME language as {curr_msg} or the language specified by {LANGUAGE}.\n"
-            "- Do not switch to English unless the user does.\n\n"
-
-            "Output rules:\n"
-            "- Output ONLY plain text.\n"
-            "- One group of questions per line.\n"
-            "- No emojis, no JSON, no explanations, no medical advice.\n"
-            "- If no follow-up is needed, output exactly: NO_FOLLOWUP"
+            "You are a friendly Pharmacovigilance assistant collecting medicine safety information.\n\n"
+            
+            "CRITICAL RULES:\n"
+            "1. You are ONLY collecting information for these specific fields: {target_missing}\n"
+            "2. NEVER ask about fields already in {already_collected}\n"
+            "3. NEVER jump ahead to other topics not in {target_missing}\n"
+            "4. Ask questions in a natural, conversational way - like a helpful friend\n"
+            "5. Respond in the SAME language as the user's message\n\n"
+            
+            "CURRENT TASK:\n"
+            "You need to collect: {readable_missing}\n\n"
+            
+            "HANDLING PROBLEMS:\n"
+            "- If {problems} list has items, mention them briefly at the start\n"
+            "- Then continue with your question\n\n"
+            
+            "RESPONSE RULES:\n"
+            "- Keep responses SHORT (1-2 sentences max)\n"
+            "- Ask for ONLY the current section fields\n"
+            "- If user says they don't have info, note it and move on\n"
+            "- If user gives partial info, acknowledge and ask for remaining\n"
+            "- NO medical advice, NO explanations of why you need info\n\n"
+            
+            "OUTPUT:\n"
+            "- Plain text only\n"
+            "- Natural language, no bullet points unless explicitly listing options\n"
+            "- If all fields collected, output exactly: NO_FOLLOWUP"
         )
 
         messages = [
-            {"role": "system", "content": patient_rules},
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "system", "content": f"Extracted data so far (DO NOT ask for these again):\n{already}"},
-            {"role": "system", "content": f"Missing mandatory information (ONLY ask for these):\n{missing_info}"},
-            {"role": "system", "content": f"Previous conversation:\n{prev_msgs}"},
-            {"role": "user", "content": curr_msg}
+            {"role": "system", "content": SYSTEM_PROMPT.format(
+                target_missing=target_missing,
+                already_collected=list(already.keys()),
+                readable_missing=readable_missing,
+                problems=problems
+            )},
+            {"role": "system", "content": f"User's current message: {curr_msg}"},
+            {"role": "system", "content": f"Information already collected (DO NOT ask again):\n{already}"},
+            {"role": "system", "content": f"Recent conversation:\n{concise_history}"},
         ]
         
         if problems:
-            messages.append({"role": "system", "content": f"Problems with user input:\n{problems}"})
+            messages.append({"role": "system", "content": f"Issues with current input: {', '.join(problems)}"})
         
-        messages.append({"role": "system", "content": f"Has user given any doc: {has_given_doc}"})
-        messages.append({"role": "system", "content": f"User language: {LANGUAGE}"})
+        if has_given_doc:
+            messages.append({"role": "system", "content": "User has already provided a document/prescription."})
 
         response = client.chat.completions.create(
             model=model,
             messages=messages,
-            temperature=0.2
+            temperature=0.1,  # Lower temperature for more consistent responses
+            max_tokens=150   # Limit response length
         )
 
         output = response.choices[0].message.content.strip()
@@ -134,77 +182,47 @@ def build_llm_messages(state: dict) -> str:
 
     elif user_type == "doctor":
         DOCTOR_SYSTEM_PROMPT = (
-            "You are a Pharmacovigilance Professional Assistant. Your goal is to collect clinical data for a "
-            "regulatory safety report from a healthcare provider. Use professional, concise, and clinical language.\n\n"
-
-            "You will be provided with:\n"
-            "- curr_msg: The current message from the physician/HCV\n"
-            "- already: Extracted clinical data collected so far\n"
-            "- to_use: Relevant clinical info extracted from the current input\n"
-            "- missing_info: Mandatory regulatory fields still required\n"
-            "- prev_msgs: Previous professional correspondence\n"
-            "- problems: Technical issues (e.g., illegible scans, incomplete data strings, irrelevant content)\n"
-            "- has_given_doc: Boolean (True if clinical records or prescriptions have been uploaded)\n"
-            "- LANGUAGE: The primary language of the user's current message.\n\n"
-
-            "Follow these rules strictly:\n\n"
-
-            "STEP 1: Classify the message into GREETING, QUESTION, or STATEMENT/DATA PROVIDER.\n\n"
-
-            "STEP 2: Address Problems (ONLY IF PRESENT)\n"
-            "- If the {problems} list is NOT empty, start your message by addressing these issues.\n"
-            "- Use the exact content from the {problems} list to tell the user what went wrong.\n"
-            "- If {problems} is empty, SKIP this step entirely.\n\n"
-
-            "STEP 3A: IF the message is a GREETING:\n"
-            "- Respond with professional courtesy AND ask for first missing fields from {missing_info}.\n"
-            "- Example: 'Thank you for your report. Could you please provide the patient details and medicine information?'\n\n"
-
-            "STEP 3B: IF the message is a QUESTION:\n"
-            "- Provide a concise answer using ONLY {already} and {prev_msgs}. Do not request additional data in this step.\n\n"
-
-            "STEP 3C: IF the message is a STATEMENT (or after greeting/problem handling):\n"
-            "1. CRITICAL: NEVER ask for fields already present in {already}. Only ask for fields in {missing_info}.\n"
-            "2. CATEGORY GROUPING:\n"
-            "   - Combine all date-related info (Start date, Stop date, Onset date) into one sentence.\n"
-            "   - Combine all event-related info (Side effect description, Action taken, Outcome) into another.\n"
-            "3. PRESCRIPTION PROTOCOL:\n"
-            "   - If {has_given_doc} is False AND the user has NOT previously stated that they do not have documents, include a request for clinical records.\n\n"
-
-            "STEP 4: Completion\n"
-            "- If {missing_info} is empty AND ({has_given_doc} is True OR the doctor confirmed no doc is available), "
-            "respond exactly with: NO_FOLLOWUP\n\n"
-
-            "STEP 5: Language Adaptation (MANDATORY)\n"
-            "- You MUST detect and respond in the SAME language as {curr_msg} or as specified by {LANGUAGE}.\n\n"
-
-            "Output rules:\n"
-            "- Output ONLY plain text.\n"
-            "- Use a professional, structured tone.\n"
-            "- One clinical category per line.\n"
-            "- No emojis, no JSON, no medical advice.\n"
-            "- If no follow-up is required, output exactly: NO_FOLLOWUP"
+            "You are a professional Pharmacovigilance assistant collecting clinical data from healthcare providers.\n\n"
+            
+            "CRITICAL RULES:\n"
+            "1. You are ONLY collecting information for: {target_missing}\n"
+            "2. NEVER ask about fields already in {already_collected}\n"
+            "3. Use professional, clinical language\n"
+            "4. Be concise and structured\n\n"
+            
+            "CURRENT TASK:\n"
+            "Collect: {readable_missing}\n\n"
+            
+            "RESPONSE RULES:\n"
+            "- Keep responses brief and professional\n"
+            "- One clinical category at a time\n"
+            "- Accept partial data and request remaining\n"
+            "- NO medical advice or clinical opinions\n\n"
+            
+            "OUTPUT:\n"
+            "- Plain text, professional tone\n"
+            "- If all fields collected, output: NO_FOLLOWUP"
         )
 
         messages = [
-            {"role": "system", "content": doctor_rules},
-            {"role": "system", "content": DOCTOR_SYSTEM_PROMPT},
-            {"role": "system", "content": f"Extracted data so far (DO NOT ask for these again):\n{already}"},
-            {"role": "system", "content": f"Missing mandatory information (ONLY ask for these):\n{missing_info}"},
-            {"role": "system", "content": f"Previous conversation:\n{prev_msgs}"},
-            {"role": "user", "content": curr_msg}
+            {"role": "system", "content": DOCTOR_SYSTEM_PROMPT.format(
+                target_missing=target_missing,
+                already_collected=list(already.keys()),
+                readable_missing=readable_missing
+            )},
+            {"role": "system", "content": f"Provider's message: {curr_msg}"},
+            {"role": "system", "content": f"Data collected:\n{already}"},
+            {"role": "system", "content": f"Recent exchange:\n{concise_history}"},
         ]
         
         if problems:
-            messages.append({"role": "system", "content": f"Problems with user input:\n{problems}"})
-        
-        messages.append({"role": "system", "content": f"Has user given any doc: {has_given_doc}"})
-        messages.append({"role": "system", "content": f"User language: {LANGUAGE}"})
+            messages.append({"role": "system", "content": f"Technical issues: {', '.join(problems)}"})
 
         response = client.chat.completions.create(
             model=model,
             messages=messages,
-            temperature=0.2
+            temperature=0.1,
+            max_tokens=150
         )
 
         output = response.choices[0].message.content.strip()

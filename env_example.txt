@@ -1,16 +1,18 @@
-WHATSAPP_PHONE_NUMBER_ID=
-WHATSAPP_ACCESS_TOKEN=
+# Gemini
+
+WHATSAPP_PHONE_NUMBER_ID=+15551683996
+WHATSAPP_ACCESS_TOKEN=EAAfb2KrXKSEBQh3gEaoQg6ExE3OUvNB0lfq0jlSTmxKF6kuqgPz4Iv2iBf6v1MjQ1lnby9J4SJcQ36J3rZASS7L1mMhRy8o8zg5Uw2VqpWT7eClEMJdBHwQHNVGtNIfK6Aa5AMq11SzrZBCVBmAwZBZBIv0ZCrDyBJbc1gNfBvFJZB8GsUxnVb4b3nbLYMdQZDZD
 WHATSAPP_VERIFY_TOKEN=your_secret
 
 # MongoDB
-MONGODB_URI=
-MONGODB_DATABASE=
+MONGODB_URI=mongodb+srv://uttkarsh2003solanki_db_user:xBUfFLealw42FVGW@cluster0.ditmtth.mongodb.net/
+MONGODB_DATABASE=pv_connect
 
 # Cloudinary
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-GROQ_API_KEY=
-GEMINI_API_KEY=
-ASSEMBLY_API_KEY=
-# llama-3.3-70b-versatile for textual task  gemini 2.5 flash for ocr task (maybe replaced with some non api model later) and assembly ai for stt tasks only 
+CLOUDINARY_CLOUD_NAME=drs45pz9r
+CLOUDINARY_API_KEY=616122438594378
+CLOUDINARY_API_SECRET=51tsxN0iqJR9BjhbFYC8Eo_SIAI
+GROQ_API_KEY=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
+GEMINI_API_KEY=AIzaSyChvaXRY_ksfjgRbw5Fl2tjoe6T3C0l3Hg
+ASSEMBLY_API_KEY=d695e15a102f4db4b9df5c9267b4676f
+#llama-3.3-70b-versatile for textual task  gemini 2.5 flash for ocr task (maybe replaced with some non api model later) and assembly ai for stt tasks only  

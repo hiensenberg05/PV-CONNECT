@@ -1,7 +1,11 @@
 # backend/app/workflows/verify_doctorno.py
 """
-Verify doctor by phone number from MongoDB.
+Verify doctor by phone number from MongoDB - FIXED VERSION
 Checks the 'doctors' collection in pv_connect database.
+
+FIXES:
+1. Fixed race condition in doctor ID generation using atomic increment
+2. Added duplicate phone number check
 
 DB Structure (from MongoDB):
 {
@@ -70,10 +74,35 @@ async def add_doctor_pending_verification(
     """
     Add a new doctor to the collection with verified=False.
     Returns the generated doctor_id.
+    
+    FIXED: Uses atomic increment to prevent race conditions.
     """
-    # Generate doctor_id
-    count = await mongodb_service.db.doctors.count_documents({})
-    doctor_id = f"doc_{str(count + 1).zfill(4)}"
+    # FIX 1: Check if doctor already exists (prevent duplicates)
+    existing = await mongodb_service.db.doctors.find_one(
+        {"phone_number": phone_number}
+    )
+    if existing:
+        # Doctor already exists - return existing ID
+        return existing.get("doctor_id")
+    
+    # FIX 2: Use atomic counter for ID generation (prevents race condition)
+    try:
+        # Use MongoDB's findAndModify atomic operation
+        counter_doc = await mongodb_service.db.counters.find_one_and_update(
+            {"_id": "doctor_id_sequence"},
+            {"$inc": {"value": 1}},
+            upsert=True,
+            return_document=True  # Return the document AFTER update
+        )
+        
+        sequence_num = counter_doc.get("value", 1)
+        doctor_id = f"doc_{str(sequence_num).zfill(4)}"
+        
+    except Exception as e:
+        # Fallback: Use timestamp-based ID if counter fails
+        timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        doctor_id = f"doc_{timestamp}"
+        print(f"[verify_doctorno] Counter failed, using timestamp ID: {doctor_id}")
     
     doctor_doc = {
         "doctor_id": doctor_id,
@@ -87,15 +116,23 @@ async def add_doctor_pending_verification(
         "created_at": datetime.utcnow()
     }
     
-    await mongodb_service.db.doctors.insert_one(doctor_doc)
-    return doctor_id
+    try:
+        await mongodb_service.db.doctors.insert_one(doctor_doc)
+        return doctor_id
+    except Exception as e:
+        print(f"[verify_doctorno] Error inserting doctor: {str(e)}")
+        raise
 
 
 async def mark_doctor_verified(phone_number: str, license_number: str = None) -> bool:
     """
     Mark a doctor as verified after human review.
     """
-    update_data = {"verified": True, "pending_review": False}
+    update_data = {
+        "verified": True,
+        "pending_review": False,
+        "verified_at": datetime.utcnow()
+    }
     if license_number:
         update_data["license_number"] = license_number
     
@@ -112,3 +149,19 @@ async def get_all_pending_doctors() -> list:
     """
     cursor = mongodb_service.db.doctors.find({"pending_review": True})
     return await cursor.to_list(length=100)
+
+
+async def initialize_counter() -> None:
+    """
+    Initialize the doctor ID counter if it doesn't exist.
+    Should be called during app startup.
+    """
+    existing = await mongodb_service.db.counters.find_one({"_id": "doctor_id_sequence"})
+    if not existing:
+        # Count existing doctors to initialize counter
+        count = await mongodb_service.db.doctors.count_documents({})
+        await mongodb_service.db.counters.insert_one({
+            "_id": "doctor_id_sequence",
+            "value": count
+        })
+        print(f"[verify_doctorno] Initialized doctor ID counter at {count}")

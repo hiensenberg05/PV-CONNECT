@@ -4,7 +4,7 @@ Service to check if text input is useful for filling missing fields.
 Uses LLM to make the determination.
 """
 
-from app.services.llm_service import get_model
+from services.llm_service import get_model
 
 
 SEE_USELESS_SYSTEM_PROMPT = (

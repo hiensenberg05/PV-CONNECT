@@ -188,7 +188,7 @@ def fill_data_remove_missing(state: dict) -> dict:
     messages = [
         {
             "role": "system",
-            "content": FILL_MISSING_SYSTEM_PROMPT.format(target_fields=target_missing)
+            "content": FILL_MISSING_SYSTEM_PROMPT
         },
         {
             "role": "system",

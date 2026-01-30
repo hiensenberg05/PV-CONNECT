@@ -122,35 +122,15 @@ def build_llm_messages(state: dict) -> str:
     client, model = get_model()
 
     if user_type == "patient":
-        SYSTEM_PROMPT = (
-            "You are a friendly Pharmacovigilance assistant collecting medicine safety information.\n\n"
-            
-            "CRITICAL RULES:\n"
-            "1. You are ONLY collecting information for these specific fields: {target_missing}\n"
-            "2. NEVER ask about fields already in {already_collected}\n"
-            "3. NEVER jump ahead to other topics not in {target_missing}\n"
-            "4. Ask questions in a natural, conversational way - like a helpful friend\n"
-            "5. Respond in the SAME language as the user's message\n\n"
-            
-            "CURRENT TASK:\n"
-            "You need to collect: {readable_missing}\n\n"
-            
-            "HANDLING PROBLEMS:\n"
-            "- If {problems} list has items, mention them briefly at the start\n"
-            "- Then continue with your question\n\n"
-            
-            "RESPONSE RULES:\n"
-            "- Keep responses SHORT (1-2 sentences max)\n"
-            "- Ask for ONLY the current section fields\n"
-            "- If user says they don't have info, note it and move on\n"
-            "- If user gives partial info, acknowledge and ask for remaining\n"
-            "- NO medical advice, NO explanations of why you need info\n\n"
-            
-            "OUTPUT:\n"
-            "- Plain text only\n"
-            "- Natural language, no bullet points unless explicitly listing options\n"
-            "- If all fields collected, output exactly: NO_FOLLOWUP"
-        )
+        SYSTEM_PROMPT = _load_text_file("data/pv_patient.txt")
+        
+        # Fallback if file load fails
+        if not SYSTEM_PROMPT:
+            SYSTEM_PROMPT = (
+                "You are a friendly Pharmacovigilance assistant.\n"
+                "Collect: {readable_missing}\n"
+                "Output NO_FOLLOWUP when done."
+            )
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT.format(
@@ -181,28 +161,14 @@ def build_llm_messages(state: dict) -> str:
         return output
 
     elif user_type == "doctor":
-        DOCTOR_SYSTEM_PROMPT = (
-            "You are a professional Pharmacovigilance assistant collecting clinical data from healthcare providers.\n\n"
-            
-            "CRITICAL RULES:\n"
-            "1. You are ONLY collecting information for: {target_missing}\n"
-            "2. NEVER ask about fields already in {already_collected}\n"
-            "3. Use professional, clinical language\n"
-            "4. Be concise and structured\n\n"
-            
-            "CURRENT TASK:\n"
-            "Collect: {readable_missing}\n\n"
-            
-            "RESPONSE RULES:\n"
-            "- Keep responses brief and professional\n"
-            "- One clinical category at a time\n"
-            "- Accept partial data and request remaining\n"
-            "- NO medical advice or clinical opinions\n\n"
-            
-            "OUTPUT:\n"
-            "- Plain text, professional tone\n"
-            "- If all fields collected, output: NO_FOLLOWUP"
-        )
+        DOCTOR_SYSTEM_PROMPT = _load_text_file("data/pv_doctor.txt")
+        
+        if not DOCTOR_SYSTEM_PROMPT:
+            DOCTOR_SYSTEM_PROMPT = (
+                "You are a professional PV assistant.\n"
+                "Collect: {readable_missing}\n"
+                "Output NO_FOLLOWUP when done."
+            )
 
         messages = [
             {"role": "system", "content": DOCTOR_SYSTEM_PROMPT.format(

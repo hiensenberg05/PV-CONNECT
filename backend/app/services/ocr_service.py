@@ -1,23 +1,20 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from dotenv import load_dotenv
 
-load_dotenv()  # 🔴 THIS LINE IS IMPORTANT
+load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-model = genai.GenerativeModel(
-    model_name="models/gemini-2.5-flash"
-)
-
+# Initialize client with the new library
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 import json
 import re
 
 def extract_text_from_image(file_bytes: bytes) -> str:
     """
-    Extract text from image bytes using Gemini Pro Vision.
+    Extract text from image bytes using Google GenAI (Gemini).
     Returns the extracted text.
     """
     prompt = """
@@ -31,13 +28,11 @@ def extract_text_from_image(file_bytes: bytes) -> str:
     """
     
     try:
-        response = model.generate_content(
-            [
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
                 prompt,
-                {
-                    "mime_type": "image/jpeg",
-                    "data": file_bytes
-                }
+                types.Part.from_bytes(data=file_bytes, mime_type="image/jpeg")
             ]
         )
         return response.text.strip()

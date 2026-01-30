@@ -86,7 +86,7 @@ def convert_state_to_case(state: Dict[str, Any]) -> Case:
         medicine_details=medicine_details,
         reaction_details=reaction_details,
         severity=severity,
-        description=extracted.get("side_effect_description", ""),
+        description=extracted.get("side_effect_description") or "",
         management_action=extracted.get("management_action_taken"),
         past_disease_history=extracted.get("past_disease_history")
     )
@@ -125,16 +125,16 @@ async def save_state(state: Dict[str, Any]) -> bool:
         upsert=True
     )
 
-    # If case is complete, also save to cases collection in proper format
-    if state.get("case_complete") is True:
-        case = convert_state_to_case(state)
-        case_doc = case.to_mongo_doc()
+    # ALWAYS save to cases collection (Partial Save)
+    # This ensures we have the latest data even if the flow stops midway
+    case = convert_state_to_case(state)
+    case_doc = case.to_mongo_doc()
 
-        await mongodb_service.db.cases.update_one(
-            {"case_id": case.case_id},
-            {"$set": case_doc},
-            upsert=True
-        )
+    await mongodb_service.db.cases.update_one(
+        {"case_id": case.case_id},
+        {"$set": case_doc},
+        upsert=True
+    )
 
     return True
 

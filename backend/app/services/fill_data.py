@@ -20,8 +20,8 @@ from app.services.llm_service import get_model
 # Field validation rules
 FIELD_VALIDATORS = {
     "patient_age_value": lambda v: v.isdigit() and 0 < int(v) < 150,
-    "patient_age_unit": lambda v: v.lower() in ["years", "months", "days", "year", "month", "day", "साल", "महीने", "दिन"],
-    "patient_gender": lambda v: any(g in v.lower() for g in ["male", "female", "other", "m", "f", "aadmi", "aurat", "ladka", "ladki", "purush", "mahila"]),
+    "patient_age_unit": lambda v: v.lower() in ["years", "months", "days", "year", "month", "day", "साल", "महीने", "दिन", "saal", "mahine", "din", "yrs"],
+    "patient_gender": lambda v: any(g in v.lower() for g in ["male", "female", "other", "m", "f", "aadmi", "aurat", "ladka", "ladki", "purush", "mahila", "mard"]),
     "medicine_quantity_taken": lambda v: any(c.isdigit() for c in v),  # Must contain at least one digit
 }
 
@@ -42,7 +42,10 @@ FILL_MISSING_SYSTEM_PROMPT = (
     "8. **BOOLEAN FIELDS**: Return 'yes'/'no' or 'true'/'false' for fields like 'self_medicated', 'side_effect_continuing'.\n"
     "9. **MEDICAL TERMS**: Understand Hinglish:\n"
     "   - 'Dawai', 'Goli', 'Tablet', 'Syrup' -> medicine_name\n"
-    "   - 'Bawasir', 'Piles', 'Ulti', 'Vomiting' -> Symptoms/Side effects\n\n"
+    "   - 'Bawasir', 'Piles', 'Ulti', 'Vomiting' -> Symptoms/Side effects\n"
+    "   - COMBINED DOSAGE: If user says '500mg 2 times', extract ALL of it as medicine_quantity_taken.\n"
+    "   - DOSAGE FORM: If user says 'pill', 'tablet', 'capsule', extract as medicine_dosage_form. If implied (e.g. '500mg'), check if form is mentioned elsewhere.\n"
+    "   - DATES: Extract 'MM/YYYY' (e.g. 05/2026) as expiry. Extract ranges '15-01-2025 to 20-01-2025' into start/stop dates.\n\n"
     
     "Output format (STRICT):\n"
     "- Return ONLY a valid JSON object\n"
@@ -164,17 +167,19 @@ def fill_data_remove_missing(state: dict) -> dict:
     
     current_section_index = state.get("current_section_index", 0)
     
-    # Determine target fields (current section only)
+    # Determine target fields (Current Section + Next Section to capture spillover)
     if current_section_index < len(SECTIONS_ORDER):
         current_section_fields = SECTIONS_ORDER[current_section_index]
         target_missing = [f for f in current_section_fields if f in all_missing]
         
-        # If current section is complete, try next section
-        if not target_missing and current_section_index + 1 < len(SECTIONS_ORDER):
-            current_section_index += 1
-            state["current_section_index"] = current_section_index
-            current_section_fields = SECTIONS_ORDER[current_section_index]
-            target_missing = [f for f in current_section_fields if f in all_missing]
+        # ALWAYS peek at the next section too, in case user provides data ahead of time
+        if current_section_index + 1 < len(SECTIONS_ORDER):
+            next_section_fields = SECTIONS_ORDER[current_section_index + 1]
+            next_missing = [f for f in next_section_fields if f in all_missing]
+            target_missing.extend(next_missing)
+            
+        # Limit total fields to avoid token overflow (e.g. keep top 10)
+        target_missing = target_missing[:15]
     else:
         # Fallback: extract from all missing (shouldn't happen)
         target_missing = all_missing
@@ -243,6 +248,17 @@ def fill_data_remove_missing(state: dict) -> dict:
         if key in all_missing:
             all_missing.remove(key)
             fields_extracted.append(key)
+
+    # HEURISTIC: If age value collected but unit is missing, assume Years (if reasonable)
+    if "patient_age_value" in extracted_data and "patient_age_unit" in all_missing:
+        try:
+            age_val = int(extracted_data["patient_age_value"])
+            if age_val > 5:  # Assume years for anyone older than 5
+                extracted_data["patient_age_unit"] = "Years"
+                all_missing.remove("patient_age_unit")
+                fields_extracted.append("patient_age_unit (Inferred)")
+        except:
+            pass
 
     state["extracted_data"] = extracted_data
     state["missing"] = all_missing

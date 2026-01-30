@@ -176,14 +176,15 @@ async def process_message(
     # Step 6: Save state to cache
     set_state(phone_number, state)
 
-    # Step 7: If case complete, save to MongoDB
+    # Step 7: ALWAYS save state to MongoDB (Partial & Complete)
+    try:
+        await save_state(state)  # Persist to DB on every turn
+    except Exception as e:
+        print(f"[keep_workflow] Error saving state: {str(e)}")
+
+    # Step 8: If case complete, clear cache
     if state.get("case_complete") is True:
-        try:
-            await save_state(state)  # Persist to DB
-            delete_state(phone_number)  # Clear cache
-        except Exception as e:
-            print(f"[keep_workflow] Error saving state: {str(e)}")
-            # Don't clear cache if save failed - allows retry
+        delete_state(phone_number)  # Clear cache only on completion
 
     # Step 8: Return reply
     return {

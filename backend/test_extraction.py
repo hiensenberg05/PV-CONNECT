@@ -18,10 +18,11 @@ async def test_see_useless():
     test_cases = [
         ("mera naam Rahul hai", ["patient_name", "patient_age_value"], "Should be USEFUL (NO)"),
         ("25 saal ka hun", ["patient_age_value", "patient_age_unit"], "Should be USEFUL (NO)"),
-        ("years", ["patient_age_unit"], "Should be USEFUL (NO)"),
-        ("bhawasir ki problem thi", ["reason_for_medicine"], "Should be USEFUL (NO)"),
-        ("ok", ["patient_name"], "Should be USELESS (YES)"),
-        ("haan", ["patient_name"], "Should be USELESS (YES)"),
+        ("I just told you", ["medicine_name"], "Should be USEFUL (NO) - Context/Frustration"),
+        ("Bro I think you are fucked up", ["medicine_name"], "Should be USEFUL (NO) - Frustration"),
+        ("How am I supposed to know", ["medicine_expiry"], "Should be USEFUL (NO) - Question"),
+        ("ok", ["patient_name"], "Should be USEFUL (NO) - Confirmation might be useful now"),
+        ("Hello", ["patient_name"], "Should be USELESS (YES)"),
     ]
     
     for text, missing, expected in test_cases:
@@ -54,7 +55,20 @@ async def test_fill_data():
         print(f"\n\nInput: '{test['text']}'")
         print(f"Missing: {test['missing']}")
         
-        result = await fill_data_remove_missing(test['text'], test['missing'])
+        if 'expected_extractions' not in test:
+            test['expected_extractions'] = []
+
+        # Create state object
+        state = {
+            "to_use": test['text'],
+            "missing": test['missing'],
+            "extracted_data": {},
+            "current_section_index": 0
+        }
+        
+        # New signature takes state dict and returns updated state
+        result_state = fill_data_remove_missing(state)
+        result = result_state.get("extracted_data", {})
         
         print(f"Extracted: {result}")
         print(f"Expected to extract: {test['expected_extractions']}")

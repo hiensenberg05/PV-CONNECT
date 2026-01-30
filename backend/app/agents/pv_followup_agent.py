@@ -194,7 +194,7 @@ def run_pv_followup_agent(state: dict) -> dict:
             text_use = see_useless_yes(state["current_message"], missing)
             if text_use is True:
                 lang = state.get("language", "en")
-                msg = "Aapke message mein kuch useful information nahi hai." if lang == "hi" else "Your message doesn't contain useful information."
+                msg = "Mujhe samajh nahi aaya." if lang == "hi" else "I didn't quite get that."
                 state["problems"].append(msg)
             else:
                 to_use.append(state["current_message"])
@@ -206,7 +206,7 @@ def run_pv_followup_agent(state: dict) -> dict:
                 photo_use = see_useless_yes(doc_text, missing)
                 if photo_use is True:
                     lang = state.get("language", "en")
-                    msg = "Aapke photo/document mein kuch useful information nahi hai." if lang == "hi" else "Your document doesn't contain useful information."
+                    msg = "Document clearly nahi dikh raha." if lang == "hi" else "I couldn't read the document clearly."
                     state["problems"].append(msg)
                 else:
                     to_use.append(doc_text)
@@ -221,7 +221,7 @@ def run_pv_followup_agent(state: dict) -> dict:
                 voice_use = see_useless_yes(voice_text, missing)
                 if voice_use is True:
                     lang = state.get("language", "en")
-                    msg = "Aapke voice message mein kuch useful information nahi hai." if lang == "hi" else "Your voice message wasn't clear."
+                    msg = "Voice saaf nahi thi." if lang == "hi" else "The audio wasn't clear."
                     state["problems"].append(msg)
                 else:
                     to_use.append(voice_text)

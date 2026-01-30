@@ -141,9 +141,9 @@ logs/
 cloudinary_upload.json
 
 # Test files
-test_*.py
-*_test.py
-tests/
+
+
+
 .pytest_cache/
 
 # Jupyter Notebook

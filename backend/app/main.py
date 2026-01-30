@@ -349,7 +349,7 @@ async def admin_clear_all_states():
 # ============================================
 
 # WhatsApp webhook router (if using WhatsApp Business API)
-app.include_router(webhook_router, prefix="/api/webhooks", tags=["webhooks"])
+app.include_router(webhook_router, tags=["webhooks"])
 
 
 # ============================================

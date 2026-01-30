@@ -5,7 +5,8 @@ from groq import Groq
 load_dotenv()  # 🔴 THIS LINE IS IMPORTANT
 
 _client = None
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+# DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "llama-3.1-8b-instant"
 
 def get_model(model: str | None = None):
     global _client

@@ -53,6 +53,7 @@ async def main():
         # Parse inputs
         text_content = user_input
         doc_id = None
+        voice_id = None
         
         # Simulate attachments
         if user_input.startswith("doc "):
@@ -65,12 +66,29 @@ async def main():
             text_content = None
             print(f"[System] Sending prescription image: {doc_id}")
 
+        elif user_input.startswith("voice") or user_input.startswith("audio"):
+            # If user types 'voice' or 'audio' optionally with a path, use provided or default test sample
+            parts = user_input.split(" ", 1)
+            if len(parts) > 1 and parts[1].strip():
+                candidate = parts[1].strip()
+            else:
+                candidate = os.path.join(os.path.dirname(__file__), "tests", "sample_voice.wav")
+
+            if os.path.exists(candidate):
+                voice_id = candidate
+                text_content = None
+                print(f"[System] Sending voice file: {candidate}")
+            else:
+                print(f"[System] Voice file not found: {candidate}")
+                continue
+
         try:
             # Call Workflow
             result = await process_message(
                 phone_number=phone_number,
                 text_content=text_content,
-                doc_id=doc_id
+                doc_id=doc_id,
+                voice_id=voice_id
             )
             
             # Print Bot Reply

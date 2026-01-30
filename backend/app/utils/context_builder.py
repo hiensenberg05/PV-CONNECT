@@ -5,7 +5,7 @@ Handles Patient and Doctor flows with proper prompting and section-based progres
 """
 
 import os
-from app.services.llm_service import get_model
+from services.llm_service import get_model
 
 
 def _load_text_file(path: str) -> str:
@@ -101,6 +101,7 @@ def build_llm_messages(state: dict) -> str:
     problems = state.get("problems", [])
     has_given_doc = state.get("doc_id") is not None
     LANGUAGE = state.get("language", "en")
+    # print(problems)
 
     # Case complete check
     if not all_missing:

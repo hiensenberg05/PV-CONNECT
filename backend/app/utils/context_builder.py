@@ -101,6 +101,7 @@ def build_llm_messages(state: dict) -> str:
     problems = state.get("problems", [])
     has_given_doc = state.get("doc_id") is not None
     LANGUAGE = state.get("language", "en")
+    # print(problems)
 
     # Case complete check
     if not all_missing:

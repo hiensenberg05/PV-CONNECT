@@ -342,7 +342,7 @@ state_patient_3 = {
     "case_id": "CASE_P3",
     "user_type": "patient",
     # "current_message": "mujhe bawasir hai baitha bhi nhi jaata. Prescription nahi hai tum manually puch lo",
-    "current_message": "আমার অর্শরোগ আছে।",
+    "current_message": "",
     "chat_history": [
         {"role": "user", "content": "maine kal dawai li thi"},
         {

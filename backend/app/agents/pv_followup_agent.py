@@ -18,79 +18,79 @@ from services.llm_service import get_model
 
 
 
-def _detect_language(text: str) -> str:
-    """
-    Simple language detection - checks for Hindi/Hinglish patterns.
-    Returns 'hi' for Hindi/Hinglish, 'en' for English.
-    """
-    if not text:
-        return "en"
-    
-    # Common Hindi/Hinglish words
-    hindi_markers = [
-        'mujhe', 'mera', 'mere', 'hain', 'hai', 'kya', 'kaise', 'kaun',
-        'aap', 'tum', 'main', 'hum', 'ye', 'wo', 'nahi', 'haan',
-        'dawai', 'dawa', 'goli', 'tablet', 'bukhar', 'dard', 'pet'
-    ]
-    
-    text_lower = text.lower()
-    hindi_count = sum(1 for marker in hindi_markers if marker in text_lower)
-    
-    return "hi" if hindi_count >= 2 else "en"
-
-
 # def _detect_language(text: str) -> str:
 #     """
-#     LLM-only language detection using get_model().
-#     Separates Hindi (Devanagari) and Hinglish (Roman Hindi).
+#     Simple language detection - checks for Hindi/Hinglish patterns.
+#     Returns 'hi' for Hindi/Hinglish, 'en' for English.
 #     """
-
-#     if not text or not text.strip():
+#     if not text:
 #         return "en"
+    
+#     # Common Hindi/Hinglish words
+#     hindi_markers = [
+#         'mujhe', 'mera', 'mere', 'hain', 'hai', 'kya', 'kaise', 'kaun',
+#         'aap', 'tum', 'main', 'hum', 'ye', 'wo', 'nahi', 'haan',
+#         'dawai', 'dawa', 'goli', 'tablet', 'bukhar', 'dard', 'pet'
+#     ]
+    
+#     text_lower = text.lower()
+#     hindi_count = sum(1 for marker in hindi_markers if marker in text_lower)
+    
+#     return "hi" if hindi_count >= 2 else "en"
 
-#     client, model = get_model()
 
-#     system_prompt = (
-#         "You are a strict language detection engine.\n\n"
-#         "Identify the language of the user's message and reply with ONLY ONE code from below:\n\n"
-#         "hi     = Hindi written in Devanagari script\n"
-#         "hi_en  = Hinglish (Hindi written in English/Roman letters)\n"
-#         "en     = English\n"
-#         "ta     = Tamil\n"
-#         "te     = Telugu\n"
-#         "bn     = Bengali\n"
-#         "mr     = Marathi\n"
-#         "gu     = Gujarati\n"
-#         "ur     = Urdu\n"
-#         "pa     = Punjabi\n\n"
-#         "Rules:\n"
-#         "- Respond with ONLY the language code\n"
-#         "- No explanation\n"
-#         "- No extra text\n"
-#         "- If unsure, respond with en"
-#     )
+def _detect_language(text: str) -> str:
+    """
+    LLM-only language detection using get_model().
+    Separates Hindi (Devanagari) and Hinglish (Roman Hindi).
+    """
 
-#     try:
-#         response = client.chat.completions.create(
-#             model=model,
-#             messages=[
-#                 {"role": "system", "content": system_prompt},
-#                 {"role": "user", "content": text}
-#             ],
-#             temperature=0,
-#             max_tokens=5
-#         )
+    if not text or not text.strip():
+        return "en"
 
-#         lang = response.choices[0].message.content.strip().lower()
+    client, model = get_model()
 
-#         allowed_langs = {
-#             "hi", "hi_en", "en", "ta", "te", "bn", "mr", "gu", "ur", "pa"
-#         }
+    system_prompt = (
+        "You are a strict language detection engine.\n\n"
+        "Identify the language of the user's message and reply with ONLY ONE code from below:\n\n"
+        "hi     = Hindi written in Devanagari script\n"
+        "hi_en  = Hinglish (Hindi written in English/Roman letters)\n"
+        "en     = English\n"
+        "ta     = Tamil\n"
+        "te     = Telugu\n"
+        "bn     = Bengali\n"
+        "mr     = Marathi\n"
+        "gu     = Gujarati\n"
+        "ur     = Urdu\n"
+        "pa     = Punjabi\n\n"
+        "Rules:\n"
+        "- Respond with ONLY the language code\n"
+        "- No explanation\n"
+        "- No extra text\n"
+        "- If unsure, respond with en"
+    )
 
-#         return lang if lang in allowed_langs else "en"
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text}
+            ],
+            temperature=0,
+            max_tokens=5
+        )
 
-#     except Exception:
-#         return "en"
+        lang = response.choices[0].message.content.strip().lower()
+
+        allowed_langs = {
+            "hi", "hi_en", "en", "ta", "te", "bn", "mr", "gu", "ur", "pa"
+        }
+
+        return lang if lang in allowed_langs else "en"
+
+    except Exception:
+        return "en"
 
 
 
@@ -232,6 +232,7 @@ def run_pv_followup_agent(state: dict) -> dict:
             try:
                 media = download_media(state["doc_id"])
                 state = run_ocr_on_state(state, media["file_path"])
+                # print(state["current_doc_data"].raw_text)
             except Exception as e:
                 state["problems"].append(f"Error processing document: {str(e)}")
         

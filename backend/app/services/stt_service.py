@@ -1,6 +1,7 @@
 import assemblyai as aai
 import os
-
+from dotenv import load_dotenv
+load_dotenv()  # reads .env in cwd or project root
 
 
 def transcribe_audio(file_bytes: bytes) -> str:
@@ -9,16 +10,22 @@ def transcribe_audio(file_bytes: bytes) -> str:
     Returns the transcript text.
     """
     try:
-        aai.settings.api_key = os.getenv("ASSEMBLY_API_KEY") 
+        # Support both env var names (some libraries expect ASSEMBLYAI_API_KEY)
+        api_key = os.getenv("ASSEMBLYAI_API_KEY") or os.getenv("ASSEMBLY_API_KEY")
+        if not api_key:
+            print("STT Warning: No AssemblyAI API key found in ASSEMBLYAI_API_KEY or ASSEMBLY_API_KEY. Skipping transcription.")
+            return ""
+
+        aai.settings.api_key = api_key
         transcriber = aai.Transcriber()
         # Upload buffer directly
         upload_url = transcriber.upload_file(file_bytes)
         transcript = transcriber.transcribe(upload_url)
-        
+
         if transcript.status == aai.TranscriptStatus.error:
             print(f"Transcription failed: {transcript.error}")
             return ""
-            
+
         return transcript.text
     except Exception as e:
         print(f"STT Error: {e}")

@@ -5,6 +5,8 @@ Uses exact string extraction - pinpoint matching.
 """
 
 from typing import Optional, Tuple
+from app.services.convert_lang_msg import convert_to_language
+
 
 
 # Exact keywords for matching (lowercase)
@@ -46,17 +48,21 @@ def extract_user_type(message: str) -> Optional[str]:
     return None
 
 
-def get_user_type_question() -> str:
+def get_user_type_question(language: str) -> str:
     """
     The hardcoded question to ask user type.
     """
-    return (
-        "🏥 *Welcome to PV-CONNECT!*\n\n"
-        "I'm here to help you report medicine side effects.\n\n"
-        "Kya aap *Patient* hain ya *Doctor*?\n\n"
-        "👤 Reply *1* or *Patient*\n"
-        "👨‍⚕️ Reply *2* or *Doctor*"
+
+    text = (
+        "🏥 *Welcome to PV-CONNECT*\n\n"
+        "We are here to assist you in reporting Adverse Drug Reactions (ADRs) "
+        "in a secure and confidential manner.\n\n"
+        "*Please identify yourself:*\n\n"
+        "👤 Reply *1* for *Patient*\n"
+        "👨‍⚕️ Reply *2* for *Healthcare Professional*"
     )
+
+    return convert_to_language(text, language)
 
 
 def is_asking_user_type_stage(state: dict) -> bool:
@@ -75,13 +81,12 @@ def get_case_id_question() -> str:
     Welcome message asking for Case ID first.
     """
     return (
-        "🏥 *Welcome to PV-CONNECT!*\n\n"
-        "I'm here to help you report medicine side effects.\n\n"
-        "Kya aapke paas pehle ka *Case ID* hai?\n"
-        "(Do you have an existing Case ID?)\n\n"
-        "📋 Agar haan, *Case ID paste karein*\n"
-        "🆕 Naya case shuru karne ke liye *'new'* likhen\n\n"
-        "💡 *Tip:* Kabhi bhi chat se nikalne ke liye *'exit'* likhen"
+        "🏥 *Welcome to PV-CONNECT*\n\n"
+        "We assist you in reporting medicine-related adverse events safely and securely.\n\n"
+        "*Do you have an existing Case ID?*\n\n"
+        "📋 *Yes* — Please paste your Case ID\n"
+        "🆕 *No* — Type *'new'* to begin a new report\n\n"
+        "💡 _Tip: Type 'exit' at any time to save your progress and leave_"
     )
 
 

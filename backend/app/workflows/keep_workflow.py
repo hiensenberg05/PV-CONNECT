@@ -26,8 +26,9 @@ from .verify_doctorno import verify_doctor_by_phone, add_doctor_pending_verifica
 from .asynchronous_licensecheck import check_verification_status
 from .state_save import save_state, get_state_by_case_id
 
-from app.agents.pv_followup_agent import run_pv_followup_agent
+from app.agents.pv_followup_agent import run_pv_followup_agent, _detect_language
 from app.schemas.conversation_state import ConversationState
+from app.services.convert_lang_msg import convert_to_language
 
 
 def generate_short_case_id() -> str:
@@ -103,26 +104,33 @@ async def process_message(
     # Step 1b: Check for exit command
     if state and is_exit_request(text_content or ""):
         case_id = state.get("case_id", "N/A")
+        lang = state.get("language", "en")
         print(f"[EXIT] User requested exit for Case {case_id}. Performing FINAL SAVE.")
         # Save state before exit
         print(f"[Exit] User exited. Saving case {case_id} to DB...")
         await save_state(state)
         # Clear cache
         delete_state(phone_number)
+        
+        exit_msg = (
+            f"✅ *Session Ended Successfully*\n\n"
+            f"Your Case ID is:\n*{case_id}*\n\n"
+            f"📋 To continue later, simply paste this Case ID when you return.\n\n"
+            f"If you are unable to provide further information, please share this Case ID with your prescribing physician.\n\n"
+            f"Thank you for using PV-CONNECT! 🏥"
+        )
+        
         return {
-            "reply": (
-                f"🙏 *Chat samaapt ho gaya!*\n\n"
-                f"Aapka Case ID hai:\n*{case_id}*\n\n"
-                f"📋 Wapas aane aur continue karne ke liye yeh Case ID use karein.\n\n"
-                f"Agar aap aur jaankari dene mein asmarth hain, toh kripya yeh Case ID apne prescribed doctor ko share karein.\n\n"
-                f"Thank you for using PV-CONNECT! 🏥"
-            ),
+            "reply": convert_to_language(exit_msg, lang),
             "state": None
         }
 
     # Step 2: No state -> Ask for Case ID first (new flow)
     if state is None:
         msg = (text_content or "").strip().lower()
+        
+        # Detect language from user's first message
+        detected_lang = _detect_language(text_content or "")
 
         # Check if user sent a Case ID (UUID format)
         if re.match(CASE_ID_PATTERN, msg):
@@ -135,17 +143,23 @@ async def process_message(
                 state = {
                     "phone_number": phone_number,
                     "pending_case_id": msg,
-                    "workflow_stage": "ASK_USER_TYPE"
+                    "workflow_stage": "ASK_USER_TYPE",
+                    "language": existing_state.get("language", detected_lang)
                 }
                 set_state(phone_number, state)
+                
+                lang = state["language"]
+                case_found_msg = "✅ *Case Found*\n\nWe have located your case in our system.\n\n*Please identify yourself:*\n\n👤 Reply *1* for *Patient*\n👨‍⚕️ Reply *2* for *Healthcare Professional*"
+                
                 return {
-                    "reply": f"Case found!\n\nKya aap *Patient* hain ya *Doctor*?\n\n👤 Reply *1* or *Patient*\n👨‍⚕️ Reply *2* or *Doctor*",
+                    "reply": convert_to_language(case_found_msg, lang),
                     "state": state
                 }
             else:
                 # Case ID not found - ask Patient/Doctor for new case
+                case_not_found_msg = "⚠️ *Case Not Found*\n\nThe provided Case ID was not found in our records.\n\n*Please identify yourself to start a new case:*\n\n👤 Reply *1* for *Patient*\n👨‍⚕️ Reply *2* for *Healthcare Professional*"
                 return {
-                    "reply": f"Case ID not found.\n\nKya aap *Patient* hain ya *Doctor*?\n\n👤 Reply *1* or *Patient*\n👨‍⚕️ Reply *2* or *Doctor*",
+                    "reply": convert_to_language(case_not_found_msg, detected_lang),
                     "state": None
                 }
 
@@ -153,7 +167,7 @@ async def process_message(
         elif is_new_case_request(msg):
             # Start new case - ask Patient/Doctor
             return {
-                "reply": get_user_type_question(),
+                "reply": convert_to_language(get_user_type_question(), detected_lang),
                 "state": None
             }
 
@@ -166,7 +180,7 @@ async def process_message(
         else:
             # First contact - ask for Case ID
             return {
-                "reply": get_case_id_question(),
+                "reply": convert_to_language(get_case_id_question(), detected_lang),
                 "state": None
             }
 
@@ -185,13 +199,17 @@ async def process_message(
                 if user_type == "doctor":
                     existing_state["verified_doctor"] = False  # Doctor needs verification
                 set_state(phone_number, existing_state)
+                
+                lang = existing_state.get("language", "en")
+                loaded_msg = f"✅ *Case Loaded Successfully*\n\nCase ID: *{pending_case_id}*\nRole: *{user_type.upper()}*\n\nResuming from where you left off. Please proceed with the next question."
+                
                 return {
-                    "reply": f"Case {pending_case_id} loaded successfully as {user_type.upper()}!\nResuming from where it was left off...",
+                    "reply": convert_to_language(loaded_msg, lang),
                     "state": existing_state
                 }
         # Still waiting for valid user type
         return {
-            "reply": "Kya aap *Patient* hain ya *Doctor*?\n\n👤 Reply *1* or *Patient*\n👨‍⚕️ Reply *2* or *Doctor*",
+            "reply": "*Please identify yourself:*\n\n👤 Reply *1* for *Patient*\n👨‍⚕️ Reply *2* for *Healthcare Professional*",
             "state": state
         }
 

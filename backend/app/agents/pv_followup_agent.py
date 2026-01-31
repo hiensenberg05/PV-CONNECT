@@ -16,6 +16,7 @@ from app.services.see_useless import see_useless_yes
 from app.services.fill_data import fill_data_remove_missing
 from app.utils.context_builder import build_llm_messages
 from app.services.llm_service import get_model
+from app.services.convert_lang_msg import convert_to_language
 
 
 def _detect_language(text: str) -> str:
@@ -102,13 +103,14 @@ def run_pv_followup_agent(state: dict) -> dict:
         
         # Unverified doctor - handle license submission
         if not state.get("verified_doctor"):
+            lang = state.get("language", "en")
             if state.get("doc_id"):
                 # SKIP OCR for license - Just accept it
                 state["verified_doctor"] = True
-                state["followup_msg"] = "Your license has been received. You may now proceed to report the case."
+                state["followup_msg"] = convert_to_language("Your license has been received. You may now proceed to report the case.", lang)
                 return state
             else:
-                state["followup_msg"] = "Please upload your medical license ID to verify your identity."
+                state["followup_msg"] = convert_to_language("Please upload your medical license ID to verify your identity.", lang)
                 return state
         
         # Verified Doctor - Normal data collection flow
@@ -234,8 +236,7 @@ def run_pv_followup_agent(state: dict) -> dict:
             text_use = see_useless_yes(state["current_message"], missing)
             if text_use is True:
                 lang = state.get("language", "en")
-                msg = "Mujhe samajh nahi aaya." if lang == "hi" else "I didn't quite get that."
-                state["problems"].append(msg)
+                state["problems"].append(convert_to_language("I didn't quite understand that. Could you please rephrase?", lang))
             else:
                 to_use.append(state["current_message"])
 
@@ -246,8 +247,7 @@ def run_pv_followup_agent(state: dict) -> dict:
                 photo_use = see_useless_yes(doc_text, missing)
                 if photo_use is True:
                     lang = state.get("language", "en")
-                    msg = "Document clearly nahi dikh raha." if lang == "hi" else "I couldn't read the document clearly."
-                    state["problems"].append(msg)
+                    state["problems"].append(convert_to_language("I couldn't read the document clearly. Please upload a clearer image.", lang))
                 else:
                     to_use.append(doc_text)
                     if "doc_all" not in state:
@@ -261,8 +261,7 @@ def run_pv_followup_agent(state: dict) -> dict:
                 voice_use = see_useless_yes(voice_text, missing)
                 if voice_use is True:
                     lang = state.get("language", "en")
-                    msg = "Voice saaf nahi thi." if lang == "hi" else "The audio wasn't clear."
-                    state["problems"].append(msg)
+                    state["problems"].append(convert_to_language("The audio wasn't clear. Could you please try again?", lang))
                 else:
                     to_use.append(voice_text)
                     if "voice_all" not in state:

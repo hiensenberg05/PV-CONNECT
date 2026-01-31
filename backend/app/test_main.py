@@ -47,7 +47,15 @@ async def main():
         except EOFError:
             break
             
+        # Handle exit - pass to workflow first to show exit message
         if user_input.lower() in ["exit", "quit"]:
+            result = await process_message(
+                phone_number=phone_number,
+                text_content=user_input,
+                doc_id=None,
+                voice_id=None
+            )
+            print(f"\nBot: {result['reply']}")
             break
             
         # Parse inputs

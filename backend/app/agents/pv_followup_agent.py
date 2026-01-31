@@ -8,13 +8,13 @@ Key improvements:
 4. Cleaner state management
 """
 
-from services.load_data import download_media
-from services.ocr_service import run_ocr_on_state
-from services.stt_service import run_voice_on_state
-from services.see_useless import see_useless_yes
-from services.fill_data import fill_data_remove_missing
-from utils.context_builder import build_llm_messages
-from services.llm_service import get_model
+from app.services.load_data import download_media
+from app.services.ocr_service import run_ocr_on_state
+from app.services.stt_service import run_voice_on_state
+from app.services.see_useless import see_useless_yes
+from app.services.fill_data import fill_data_remove_missing
+from app.utils.context_builder import build_llm_messages
+from app.services.llm_service import get_model
 
 
 

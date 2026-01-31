@@ -155,3 +155,13 @@ async def save_case_only(state: Dict[str, Any]) -> str:
     )
 
     return case.case_id
+
+
+async def get_state_by_case_id(case_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Retrieve conversation state by Case ID.
+    Used for doctor handoff to load patient's progress.
+    """
+    return await mongodb_service.db.conversation_states.find_one(
+        {"case_id": case_id}
+    )

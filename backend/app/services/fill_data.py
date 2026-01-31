@@ -14,7 +14,7 @@ FIXES:
 import json
 import re
 from typing import Dict, Any
-from services.llm_service import get_model
+from app.services.llm_service import get_model
 
 
 # Field validation rules
@@ -163,7 +163,7 @@ def fill_data_remove_missing(state: dict) -> dict:
 
     # CRITICAL FIX: Only extract from current section's missing fields
     # This prevents LLM from hallucinating data for future sections
-    from schemas.conversation_state import SECTIONS_ORDER
+    from app.schemas.conversation_state import SECTIONS_ORDER
     
     current_section_index = state.get("current_section_index", 0)
     

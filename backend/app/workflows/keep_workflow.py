@@ -1,37 +1,36 @@
 # backend/app/workflows/keep_workflow.py
 """
-Main workflow orchestrator - FIXED VERSION
+Main workflow orchestrator with chat continuation support.
 Uses cache for fast state, DB verification for doctors, async license check.
-
-FIXES:
-1. Removed unused imports
-2. Removed redundant problems reset
-3. Added doctor verification edge case handling
-4. Better error handling
 
 Flow:
 1. Receive message from WhatsApp
-2. Get state from cache (fast)
-3. If no state -> Ask user type -> Initialize state
-4. If doctor -> Verify by phone OR submit license for async check
-5. Route to pv_followup_agent
-6. Save state to cache
-7. If case_complete -> Save to MongoDB
-8. Return reply
+2. Check for exit command
+3. Get state from cache (fast)
+4. If no state -> Ask for Case ID or new case
+5. If Case ID provided -> Load from DB
+6. If doctor -> Verify by phone OR submit license for async check
+7. Route to pv_followup_agent
+8. Save state to cache and DB
+9. Return reply
 """
 
 from typing import Dict, Any, Optional
 from uuid import uuid4
 from datetime import datetime
+import re
 
 from .cache_store import get_state, set_state, delete_state
-from .router import extract_user_type, get_user_type_question
+from .router import extract_user_type, get_user_type_question, get_case_id_question, is_new_case_request, is_exit_request
 from .verify_doctorno import verify_doctor_by_phone, add_doctor_pending_verification
 from .asynchronous_licensecheck import check_verification_status
-from .state_save import save_state
+from .state_save import save_state, get_state_by_case_id
 
 from app.agents.pv_followup_agent import run_pv_followup_agent
 from app.schemas.conversation_state import ConversationState
+
+
+UUID_PATTERN = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
 
 
 def create_initial_state(phone_number: str, user_type: str) -> Dict[str, Any]:
@@ -77,21 +76,106 @@ async def process_message(
 
     # Step 1: Get state from cache (fast)
     state = get_state(phone_number)
+    if state:
+        print(f"[DEBUG] State found. Type={state.get('user_type')} Verified={state.get('verified_doctor')}")
+        # Update last activity timestamp
+        state["last_activity"] = datetime.now().isoformat()
+        set_state(phone_number, state)
+    else:
+        print("[DEBUG] No state found in cache")
 
-    # Step 2: No state -> Ask user type or create new state
+    # Step 1b: Check for exit command
+    if state and is_exit_request(text_content or ""):
+        case_id = state.get("case_id", "N/A")
+        # Save state before exit
+        await save_state(state)
+        # Clear cache
+        delete_state(phone_number)
+        return {
+            "reply": (
+                f"🙏 *Chat samaapt ho gaya!*\n\n"
+                f"Aapka Case ID hai:\n*{case_id}*\n\n"
+                f"📋 Wapas aane aur continue karne ke liye yeh Case ID use karein.\n\n"
+                f"Agar aap aur jaankari dene mein asmarth hain, toh kripya yeh Case ID apne prescribed doctor ko share karein.\n\n"
+                f"Thank you for using PV-CONNECT! 🏥"
+            ),
+            "state": None
+        }
+
+    # Step 2: No state -> Ask for Case ID first (new flow)
     if state is None:
-        user_type = extract_user_type(text_content or "")
+        msg = (text_content or "").strip().lower()
 
-        if user_type is None:
-            # First contact or unclear - ask user type
+        # Check if user sent a Case ID (UUID format)
+        if re.match(UUID_PATTERN, msg):
+            # Try to find case in DB
+            existing_state = await get_state_by_case_id(msg)
+            if existing_state:
+                # Found case - ask Patient/Doctor before loading
+                print(f"[Resume] Case {msg} found. Asking user type first.")
+                # Create temporary state with pending case ID
+                state = {
+                    "phone_number": phone_number,
+                    "pending_case_id": msg,
+                    "workflow_stage": "ASK_USER_TYPE"
+                }
+                set_state(phone_number, state)
+                return {
+                    "reply": f"Case found!\n\nKya aap *Patient* hain ya *Doctor*?\n\n👤 Reply *1* or *Patient*\n👨‍⚕️ Reply *2* or *Doctor*",
+                    "state": state
+                }
+            else:
+                # Case ID not found - ask Patient/Doctor for new case
+                return {
+                    "reply": f"Case ID not found.\n\nKya aap *Patient* hain ya *Doctor*?\n\n👤 Reply *1* or *Patient*\n👨‍⚕️ Reply *2* or *Doctor*",
+                    "state": None
+                }
+
+        # Check if user wants new case
+        elif is_new_case_request(msg):
+            # Start new case - ask Patient/Doctor
             return {
                 "reply": get_user_type_question(),
                 "state": None
             }
-        else:
+
+        # Check if user indicated patient/doctor
+        user_type = extract_user_type(msg)
+        if user_type:
             # User replied with type - create state
             state = create_initial_state(phone_number, user_type)
-            set_state(phone_number, state)  # SAVE STATE
+            set_state(phone_number, state)
+        else:
+            # First contact - ask for Case ID
+            return {
+                "reply": get_case_id_question(),
+                "state": None
+            }
+
+    # Step 2b: Check if we have a pending case to load after user type selection
+    if state and state.get("pending_case_id") and state.get("user_type") is None:
+        user_type = extract_user_type(text_content or "")
+        if user_type:
+            pending_case_id = state["pending_case_id"]
+            # Load the case from DB
+            existing_state = await get_state_by_case_id(pending_case_id)
+            if existing_state:
+                print(f"[Resume] Loading case {pending_case_id} as {user_type}")
+                existing_state.pop("_id", None)
+                existing_state["phone_number"] = phone_number
+                existing_state["user_type"] = user_type
+                if user_type == "doctor":
+                    existing_state["verified_doctor"] = False  # Doctor needs verification
+                set_state(phone_number, existing_state)
+                return {
+                    "reply": f"Case {pending_case_id} loaded successfully as {user_type.upper()}!\nResuming from where it was left off...",
+                    "state": existing_state
+                }
+        # Still waiting for valid user type
+        return {
+            "reply": "Kya aap *Patient* hain ya *Doctor*?\n\n👤 Reply *1* or *Patient*\n👨‍⚕️ Reply *2* or *Doctor*",
+            "state": state
+        }
 
     # Step 3: Doctor verification flow
     if state.get("user_type") == "doctor":
@@ -132,7 +216,7 @@ async def process_message(
                     state["human_verified"] = False  # Pending human review
                 except Exception as e:
                     # If doctor registration fails, ask to try again
-                    set_state(phone_number, state)  # SAVE STATE
+                    set_state(phone_number, state)
                     return {
                         "reply": "Error registering license. Please try uploading again.",
                         "state": state
@@ -144,15 +228,69 @@ async def process_message(
                 if status["verified"]:
                     state["human_verified"] = True
                     state["verified_doctor"] = True
-            
+
             else:
-                # FIX: No verification path matched - ask for license
-                # This handles: not in DB, no doc_id sent, no verification_id
-                set_state(phone_number, state)  # SAVE STATE
+                # No verification path matched - ask for license
+                set_state(phone_number, state)
                 return {
                     "reply": "Please upload your medical license ID to verify your identity.",
                     "state": state
                 }
+
+        # CASE ID HANDOFF CHECK: After verification, check if verified doctor sent a Case ID
+        if state.get("verified_doctor") is True and text_content:
+            if re.match(UUID_PATTERN, text_content.strip().lower()):
+                target_case_id = text_content.strip().lower()
+                print(f"[Handoff] Doctor {phone_number} requesting case {target_case_id}")
+
+                # Fetch patient state from DB
+                patient_state_dict = await get_state_by_case_id(target_case_id)
+
+                if patient_state_dict:
+                    print(f"[Handoff] Found case data for {target_case_id}")
+
+                    # Copy relevant fields from patient state
+                    fields_to_copy = [
+                        "case_id",
+                        "extracted_data",
+                        "missing",
+                        "chat_history",
+                        "doc_all",
+                        "voice_all",
+                        "problems",
+                        "current_section_index"
+                    ]
+
+                    for field in fields_to_copy:
+                        if field in patient_state_dict:
+                            state[field] = patient_state_dict[field]
+
+                    # Add system note to history
+                    if "chat_history" not in state:
+                        state["chat_history"] = []
+                    state["chat_history"].append({
+                        "role": "system",
+                        "content": f"Doctor {state.get('doctor_name', 'Unknown')} took over the case."
+                    })
+
+                    state["followup_msg"] = (
+                        f"Case {target_case_id} loaded successfully.\n"
+                        f"Patient data retrieved. Resuming data collection."
+                    )
+
+                    # Save immediately merged state
+                    set_state(phone_number, state)
+                    await save_state(state)
+
+                    return {
+                        "reply": state["followup_msg"],
+                        "state": state
+                    }
+                else:
+                    return {
+                        "reply": f"Case ID {target_case_id} not found in database.",
+                        "state": state
+                    }
 
     # Step 4: Update per-turn data
     state = reset_per_turn_keys(state)
@@ -186,7 +324,7 @@ async def process_message(
     if state.get("case_complete") is True:
         delete_state(phone_number)  # Clear cache only on completion
 
-    # Step 8: Return reply
+    # Step 9: Return reply
     return {
         "reply": state.get("followup_msg", "Thank you for your message."),
         "state": state

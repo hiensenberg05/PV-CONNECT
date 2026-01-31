@@ -18,13 +18,33 @@ def extract_text_from_image(file_bytes: bytes) -> str:
     Returns the extracted text.
     """
     prompt = """
-    Extract text from this medical document. 
-    Identify:
-    - document type (prescription, bill, license, irrelevant)
-    - drug names
-    - dosage
-    - dates
-    Respond in JSON only.
+    You are a medical document OCR assistant for Pharmacovigilance.
+    
+    Extract ALL text and information from this medical document.
+    
+    Look for and extract:
+    - Patient name
+    - Patient age (number and unit like years/months)
+    - Patient gender
+    - Medicine/drug names
+    - Dosage (quantity, form like tablet/syrup)
+    - Dates (prescription date, medicine start/stop dates, expiry)
+    - Doctor name
+    - Hospital/clinic name
+    - Any side effects or reactions mentioned
+    - Reason for medicine / diagnosis
+    
+    Return as plain text in this format:
+    Patient Name: [name if found]
+    Age: [age if found]
+    Gender: [gender if found]
+    Medicine: [medicine name]
+    Dosage: [dosage details]
+    Dates: [any relevant dates]
+    Additional Info: [any other relevant medical info]
+    
+    If a field is not visible or readable, skip it.
+    Return ALL readable text from the document.
     """
     
     try:

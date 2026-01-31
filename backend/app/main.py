@@ -69,10 +69,17 @@ class StateResponse(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database connection on startup."""
+    """Initialize database connection and background tasks on startup."""
+    import asyncio
+    from app.services.inactivity_checker import run_inactivity_checker
+
     logger.info("Starting PV-CONNECT Backend...")
     await mongodb_service.connect()
     logger.info("✅ MongoDB connected successfully")
+
+    # Start inactivity checker background task
+    asyncio.create_task(run_inactivity_checker())
+    logger.info("✅ Inactivity checker started")
 
 
 @app.on_event("shutdown")

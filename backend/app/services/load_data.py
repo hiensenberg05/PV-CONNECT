@@ -9,7 +9,7 @@ import requests
 import mimetypes
 
 # Read token from env (may be empty in tests)
-WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
+WHATSAPP_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
 GRAPH_URL = "https://graph.facebook.com/v19.0"
 
 

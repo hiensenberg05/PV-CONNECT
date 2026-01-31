@@ -10,6 +10,8 @@ from typing import Optional, Tuple
 # Exact keywords for matching (lowercase)
 PATIENT_KEYWORDS = ["patient", "mareez", "bimar", "मरीज", "पेशेंट", "1"]
 DOCTOR_KEYWORDS = ["doctor", "dr", "physician", "डॉक्टर", "चिकित्सक", "2"]
+NEW_CASE_KEYWORDS = ["new", "no", "nahi", "naya", "start", "fresh", "नया", "नहीं", "3"]
+EXIT_KEYWORDS = ["exit", "quit", "bye", "stop", "end", "band", "बंद", "निकलना"]
 
 
 def extract_user_type(message: str) -> Optional[str]:
@@ -66,3 +68,38 @@ def is_asking_user_type_stage(state: dict) -> bool:
         state.get("user_type") is None or
         state.get("workflow_stage") == "ASK_USER_TYPE"
     )
+
+
+def get_case_id_question() -> str:
+    """
+    Welcome message asking for Case ID first.
+    """
+    return (
+        "🏥 *Welcome to PV-CONNECT!*\n\n"
+        "I'm here to help you report medicine side effects.\n\n"
+        "Kya aapke paas pehle ka *Case ID* hai?\n"
+        "(Do you have an existing Case ID?)\n\n"
+        "📋 Agar haan, *Case ID paste karein*\n"
+        "🆕 Naya case shuru karne ke liye *'new'* likhen\n\n"
+        "💡 *Tip:* Kabhi bhi chat se nikalne ke liye *'exit'* likhen"
+    )
+
+
+def is_new_case_request(message: str) -> bool:
+    """
+    Check if user wants to start a new case.
+    """
+    if not message:
+        return False
+    msg_clean = message.lower().strip()
+    return msg_clean in NEW_CASE_KEYWORDS
+
+
+def is_exit_request(message: str) -> bool:
+    """
+    Check if user wants to exit the chat.
+    """
+    if not message:
+        return False
+    msg_clean = message.lower().strip()
+    return msg_clean in EXIT_KEYWORDS

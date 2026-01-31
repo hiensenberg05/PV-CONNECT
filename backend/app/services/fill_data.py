@@ -3,25 +3,103 @@
 Service to extract data from text and fill missing fields.
 Uses LLM for extraction.
 
-FIXES:
-1. Section-aware extraction (only extract from current section)
+FIXES (Structure Preserved):
+1. Aggressive extraction from ALL missing fields (prevents loops)
 2. Better JSON parsing with multiple fallback strategies
-3. Value validation before storing
-4. Logging for debugging
-5. Error handling improvements
+3. Relaxed validation - more permissive
+4. Explicit field removal from missing list
+5. Debug logging for transparency
 """
 
 import json
 import re
 from typing import Dict, Any
+from datetime import datetime, timedelta
 from app.services.llm_service import get_model
 
 
-# Field validation rules
+def _normalize_date_expression(raw_text: str) -> str:
+    """
+    Convert Hindi/English relative dates to actual dates (DD-MM-YYYY).
+    
+    Handles:
+    - "2 din pehle" → calculates date 2 days ago
+    - "kal" → yesterday
+    - "parso" → day before yesterday
+    - "abhi"/"ab" → today
+    - Already formatted dates → pass through
+    
+    Args:
+        raw_text: Raw date string from user
+        
+    Returns:
+        Normalized date in DD-MM-YYYY format or original if can't parse
+    """
+    if not raw_text or not isinstance(raw_text, str):
+        return raw_text
+    
+    text = raw_text.strip().lower()
+    today = datetime.now()
+    
+    # If it's just a single digit or number without context, return as-is (likely invalid)
+    if text.isdigit() and len(text) <= 2:
+        return raw_text  # Don't try to normalize bare numbers like "1"
+    
+    # Check if already in proper format (DD-MM-YYYY or DD/MM/YYYY)
+    if re.match(r'\d{1,2}[-/]\d{1,2}[-/]\d{4}', text):
+        # Normalize separators to dash
+        return text.replace('/', '-')
+    
+    # Relative date patterns
+    try:
+        # "X din pehle" / "X days ago"
+        match = re.search(r'(\d+)\s*(?:din|day)[s]?\s*(?:pehle|ago|phele|phle)', text)
+        if match:
+            days = int(match.group(1))
+            target_date = today - timedelta(days=days)
+            return target_date.strftime('%d-%m-%Y')
+        
+        # "kal" = yesterday (but not "aaj kal" or within other phrases)
+        if re.search(r'\bkal\b', text) and 'parso' not in text and 'aaj' not in text:
+            target_date = today - timedelta(days=1)
+            return target_date.strftime('%d-%m-%Y')
+        
+        # "parso" / "prso" = day before yesterday
+        if 'parso' in text or 'prso' in text:
+            target_date = today - timedelta(days=2)
+            return target_date.strftime('%d-%m-%Y')
+        
+        # "abhi" / "ab" / "now" / "aaj" = today
+        if text in ['abhi', 'ab', 'now', 'aaj', 'today']:
+            return today.strftime('%d-%m-%Y')
+        
+        # "yesterday"
+        if 'yesterday' in text:
+            target_date = today - timedelta(days=1)
+            return target_date.strftime('%d-%m-%Y')
+        
+    except Exception as e:
+        print(f"[Date Normalization] Error parsing '{raw_text}': {e}")
+    
+    # Return original if can't parse
+    return raw_text
+
+
+# Date fields that need normalization
+DATE_FIELDS = {
+    "medicine_start_date",
+    "medicine_stop_date",
+    "side_effect_start_date",
+    "side_effect_stop_date",
+    "medicine_expiry_date"  # Usually already in MM/YY format
+}
+
+
+# Field validation rules - RELAXED for better extraction
 FIELD_VALIDATORS = {
-    "patient_age_value": lambda v: v.isdigit() and 0 < int(v) < 150,
-    "patient_age_unit": lambda v: v.lower() in ["years", "months", "days", "year", "month", "day", "साल", "महीने", "दिन", "saal", "mahine", "din", "yrs"],
-    "patient_gender": lambda v: any(g in v.lower() for g in ["male", "female", "other", "m", "f", "aadmi", "aurat", "ladka", "ladki", "purush", "mahila", "mard"]),
+    "patient_age_value": lambda v: str(v).replace(" ", "").isdigit() and 0 < int(v) < 150,
+    "patient_age_unit": lambda v: any(u in v.lower() for u in ["year", "month", "day", "saal", "mahine", "din", "yr"]),
+    "patient_gender": lambda v: any(g in v.lower() for g in ["male", "female", "other", "m", "f", "aadmi", "aurat", "ladka", "ladki", "purush", "mahila", "mard", "boy", "girl"]),
     "medicine_quantity_taken": lambda v: any(c.isdigit() for c in v),  # Must contain at least one digit
 }
 
@@ -34,25 +112,60 @@ FILL_MISSING_SYSTEM_PROMPT = (
     "CRITICAL EXTRACTION RULES:\n"
     "1. **ONLY extract fields from the {target_fields} list provided**\n"
     "2. **ACCURACY OVER COMPLETENESS**: If information is NOT explicitly stated, return null. DO NOT GUESS.\n"
-    "3. **NAME VALIDATION**: 'mujhe', 'main', 'hum' are PRONOUNS, NOT NAMES. Only extract proper names like 'Rahul', 'Priya'.\n"
-    "4. **GENDER**: Only extract Male/Female/Other (or Hindi equivalents). 'Bukhar', 'Dard' are symptoms, NOT genders.\n"
+    "3. **NAME VALIDATION**: 'mujhe', 'main', 'hum' are PRONOUNS, NOT NAMES. Only extract proper names.\n"
+    "4. **GENDER**: Extract Male/Female/Other. Hindi: 'male'/'ladka'/'aadmi' = Male, 'female'/'ladki'/'aurat' = Female.\n"
     "5. **AGE**: Must be a NUMBER only. Extract '25' from '25 years old'.\n"
-    "6. **AGE UNIT**: Extract 'years', 'months', or 'days' (or Hindi: 'साल', 'महीने', 'दिन').\n"
-    "7. **DATES**: Format as DD-MM-YYYY or DD/MM/YYYY if possible.\n"
-    "8. **BOOLEAN FIELDS**: Return 'yes'/'no' or 'true'/'false' for fields like 'self_medicated', 'side_effect_continuing'.\n"
-    "9. **MEDICAL TERMS**: Understand Hinglish:\n"
-    "   - 'Dawai', 'Goli', 'Tablet', 'Syrup' -> medicine_name\n"
-    "   - 'Bawasir', 'Piles', 'Ulti', 'Vomiting' -> Symptoms/Side effects\n"
-    "   - COMBINED DOSAGE: If user says '500mg 2 times', extract ALL of it as medicine_quantity_taken.\n"
-    "   - DOSAGE FORM: If user says 'pill', 'tablet', 'capsule', extract as medicine_dosage_form. If implied (e.g. '500mg'), check if form is mentioned elsewhere.\n"
-    "   - DATES: Extract 'MM/YYYY' (e.g. 05/2026) as expiry. Extract ranges '15-01-2025 to 20-01-2025' into start/stop dates.\n\n"
+    "6. **AGE UNIT**: Extract 'years', 'months', or 'days'.\n\n"
+    
+    "HINDI/HINGLISH NEGATIVE PATTERNS (CRITICAL):\n"
+    "If user says ANY of these, extract field as 'None' or 'no':\n"
+    "- 'nahi hai', 'nahi tha', 'nahi hain', 'nahi hua', 'nahi pada'\n"
+    "- 'kuch nahi', 'koi nahi'\n"
+    "- 'I don't have', 'no', 'none', 'nothing'\n"
+    "- For yes/no fields: 'nahi' alone → 'no'\n"
+    "Examples:\n"
+    "- User: 'nahi hai' → {\"past_disease_history\": \"None\"}\n"
+    "- User: 'hospital nahi gaya' → {\"severity_hospitalized\": \"no\"}\n"
+    "- User: 'koi nahi' → {\"<any optional field>\": \"None\"}\n\n"
+    
+    "FIELD INFERENCE RULES (CRITICAL):\n"
+    "1. **self_medicated**: If user mentions 'doctor', 'doctor ne kaha', 'advised' → Extract 'no'\n"
+    "2. **self_medicated**: If user says 'self suggested', 'khud se liya', 'self advised' → Extract 'yes'\n"
+    "3. **medicine_advised_by**: \n"
+    "   - If 'doctor' mentioned → Extract 'doctor'\n"
+    "   - If 'self suggested', 'khud se', 'self advised' → Extract 'self'\n"
+    "4. **side_effect_continuing**: \n"
+    "   - 'abhi bhi hai', 'still happening', 'ho raha hai' → Extract 'yes'\n"
+    "   - 'band ho gaya', 'stopped', 'nahi hai ab' → Extract 'no'\n"
+    "5. **side_effect_stop_date**: If side_effect_continuing='yes', leave as null (don't extract)\n"
+    "6. **SEVERITY FIELDS (CRITICAL)**:\n"
+    "   - severity_hospitalized: 'hospital gaya'/'admitted' → 'yes', 'nahi gaya'/'home care' → 'no'\n"
+    "   - severity_death: User is chatting → ALWAYS 'no' (don't even try to extract)\n"
+    "   - severity_affected_daily_activity: 'dikkat aayi'/'couldn't work' → 'yes', 'normal tha' → 'no'\n"
+    "   - severity_no_daily_activity_effect: Inverse of above\n\n"
+    
+    "MEDICAL TERMS:\n"
+    "- Medicine names: 'dolo', 'paracetamol', 'pudanahara', 'goli', 'tablet'\n"
+    "- Dosage form: 'tablet', 'syrup', 'capsule', 'injection'\n"
+    "- Symptoms: 'bukhar' (fever), 'dard' (pain), 'ulti' (vomiting), 'rashes'\n\n"
+    
+    "DATE HANDLING:\n"
+    "- Future dates (MM/YY like 12/26) → medicine_expiry_date\n"
+    "- Past references ('2 din pehle', 'yesterday', 'kal') → medicine_start_date or side_effect_start_date\n"
+    "- Specific dates (DD-MM-YYYY) → Match to context (start/stop/expiry)\n"
+    "- DATE RANGES: 'prso se aaj tk' (from day before yesterday to today):\n"
+    "  * Extract START: 'prso' → side_effect_start_date\n"
+    "  * Extract STOP: 'aaj' → side_effect_stop_date\n"
+    "  * IGNORE duration numbers like '1 din' - these are NOT dates\n\n"
     
     "Output format (STRICT):\n"
     "- Return ONLY a valid JSON object\n"
-    "- Keys must EXACTLY match the target field names\n"
-    "- Values must be strings or null (never boolean true/false, use 'yes'/'no')\n"
-    "- If nothing can be extracted, return: {}\n"
-    "- DO NOT include markdown code blocks (no ```json)\n"
+    "- Keys must EXACTLY match target field names\n"
+    "- Values must be strings or null\n"
+    "- For negative answers: use string 'None'\n"
+    "- For yes/no fields: use string 'yes' or 'no'\n"
+    "- If nothing extractable: return {}\n"
+    "- NO markdown code blocks (no ```json)\n"
 )
 
 
@@ -112,6 +225,10 @@ def _validate_extracted_value(field_name: str, value: Any) -> bool:
     
     if not value_str:
         return False
+        
+    # ALLOW 'None' as a valid value (indicates user explicitly said they don't have info)
+    if value_str == "None":
+        return True
     
     # Check field-specific validators
     if field_name in FIELD_VALIDATORS:
@@ -124,7 +241,7 @@ def _validate_extracted_value(field_name: str, value: Any) -> bool:
     garbage_patterns = [
         r'^[^a-zA-Z0-9\u0900-\u097F\s]+$',  # Only special characters
         r'^\s+$',  # Only whitespace
-        r'^null$|^none$|^n/a$',  # Explicit null values
+        r'^null$|^n/a$',  # Explicit null values (but 'None' is allowed above)
     ]
     
     for pattern in garbage_patterns:
@@ -136,11 +253,12 @@ def _validate_extracted_value(field_name: str, value: Any) -> bool:
 
 def fill_data_remove_missing(state: dict) -> dict:
     """
-    IMPROVED version with:
-    - Section-aware extraction
-    - Better JSON parsing
-    - Value validation
-    - Error handling
+    FIXED VERSION - Aggressive extraction without section restrictions.
+    
+    KEY CHANGES:
+    1. Extracts from ALL missing fields (not just current section)
+    2. Prevents loops where LLM asks for already-mentioned data
+    3. Explicit field removal from missing list
     
     Args:
         state: Conversation state with:
@@ -161,28 +279,9 @@ def fill_data_remove_missing(state: dict) -> dict:
     if not to_use or not all_missing:
         return state
 
-    # CRITICAL FIX: Only extract from current section's missing fields
-    # This prevents LLM from hallucinating data for future sections
-    from app.schemas.conversation_state import SECTIONS_ORDER
-    
-    current_section_index = state.get("current_section_index", 0)
-    
-    # Determine target fields (Current Section + Next Section to capture spillover)
-    if current_section_index < len(SECTIONS_ORDER):
-        current_section_fields = SECTIONS_ORDER[current_section_index]
-        target_missing = [f for f in current_section_fields if f in all_missing]
-        
-        # ALWAYS peek at the next section too, in case user provides data ahead of time
-        if current_section_index + 1 < len(SECTIONS_ORDER):
-            next_section_fields = SECTIONS_ORDER[current_section_index + 1]
-            next_missing = [f for f in next_section_fields if f in all_missing]
-            target_missing.extend(next_missing)
-            
-        # Limit total fields to avoid token overflow (e.g. keep top 10)
-        target_missing = target_missing[:15]
-    else:
-        # Fallback: extract from all missing (shouldn't happen)
-        target_missing = all_missing
+    # KEY FIX: Extract from ALL missing fields to prevent loops
+    # If user says "pudanahara", extract it even if not in current section
+    target_missing = all_missing[:20]  # Limit to prevent token overflow
 
     if not target_missing:
         return state
@@ -239,9 +338,18 @@ def fill_data_remove_missing(state: dict) -> dict:
         if key not in target_missing:
             continue
         
+        # Skip if already collected (don't overwrite)
+        if key in extracted_data and extracted_data[key] is not None:
+            continue
+        
         # Validate value
         if not _validate_extracted_value(key, value):
             continue
+        
+        # APPLY DATE NORMALIZATION for date fields
+        if key in DATE_FIELDS:
+            value = _normalize_date_expression(value)
+            print(f"[Date Normalization] {key}: '{new_data[key]}' → '{value}'")
         
         # Store and remove from missing
         extracted_data[key] = value

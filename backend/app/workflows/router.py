@@ -48,12 +48,11 @@ def extract_user_type(message: str) -> Optional[str]:
     return None
 
 
-def get_user_type_question(language: str) -> str:
+def get_user_type_question() -> str:
     """
     The hardcoded question to ask user type.
     """
-
-    text = (
+    return (
         "🏥 *Welcome to PV-CONNECT*\n\n"
         "We are here to assist you in reporting Adverse Drug Reactions (ADRs) "
         "in a secure and confidential manner.\n\n"
@@ -61,8 +60,6 @@ def get_user_type_question(language: str) -> str:
         "👤 Reply *1* for *Patient*\n"
         "👨‍⚕️ Reply *2* for *Healthcare Professional*"
     )
-
-    return convert_to_language(text, language)
 
 
 def is_asking_user_type_stage(state: dict) -> bool:

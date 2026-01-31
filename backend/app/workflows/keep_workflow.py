@@ -30,7 +30,23 @@ from app.agents.pv_followup_agent import run_pv_followup_agent
 from app.schemas.conversation_state import ConversationState
 
 
-UUID_PATTERN = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+def generate_short_case_id() -> str:
+    """
+    Generate an 8-character Base36 case ID from UUID.
+    Example output: "k5m2x9ab"
+    Uses top 40 bits of UUID for ~1 trillion unique values.
+    """
+    num = uuid4().int >> 88  # Use top 40 bits for more entropy
+    chars = "0123456789abcdefghijklmnopqrstuvwxyz"
+    result = ""
+    while num:
+        result = chars[num % 36] + result
+        num //= 36
+    return result.zfill(8)[:8]  # Ensure exactly 8 characters
+
+
+# Matches both old UUID format (36 chars) and new 8-char Base36 format
+CASE_ID_PATTERN = r'^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{8})$'
 
 
 def create_initial_state(phone_number: str, user_type: str) -> Dict[str, Any]:
@@ -38,7 +54,7 @@ def create_initial_state(phone_number: str, user_type: str) -> Dict[str, Any]:
     Create a fresh state for a new conversation using schema.
     """
     state = ConversationState(
-        case_id=str(uuid4()),
+        case_id=generate_short_case_id(),
         phone_number=phone_number,
         user_type=user_type,
         workflow_stage="COLLECTING",
@@ -88,6 +104,7 @@ async def process_message(
     if state and is_exit_request(text_content or ""):
         case_id = state.get("case_id", "N/A")
         # Save state before exit
+        print(f"[Exit] User exited. Saving case {case_id} to DB...")
         await save_state(state)
         # Clear cache
         delete_state(phone_number)
@@ -107,7 +124,7 @@ async def process_message(
         msg = (text_content or "").strip().lower()
 
         # Check if user sent a Case ID (UUID format)
-        if re.match(UUID_PATTERN, msg):
+        if re.match(CASE_ID_PATTERN, msg):
             # Try to find case in DB
             existing_state = await get_state_by_case_id(msg)
             if existing_state:
@@ -239,7 +256,7 @@ async def process_message(
 
         # CASE ID HANDOFF CHECK: After verification, check if verified doctor sent a Case ID
         if state.get("verified_doctor") is True and text_content:
-            if re.match(UUID_PATTERN, text_content.strip().lower()):
+            if re.match(CASE_ID_PATTERN, text_content.strip().lower()):
                 target_case_id = text_content.strip().lower()
                 print(f"[Handoff] Doctor {phone_number} requesting case {target_case_id}")
 

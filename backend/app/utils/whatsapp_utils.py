@@ -89,6 +89,9 @@ def extract_message_data(body: dict) -> dict | None:
     message = value["messages"][0]
 
     phone_number = contact["wa_id"]
+    # Normalize phone number to include + prefix
+    if not phone_number.startswith("+"):
+        phone_number = "+" + phone_number
     name = contact.get("profile", {}).get("name", "Unknown")
     message_type = message.get("type", "text")
 

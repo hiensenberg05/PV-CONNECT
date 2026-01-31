@@ -17,10 +17,16 @@ from app.services.ocr_service import extract_text_from_image
 from app.services.stt_service import transcribe_audio
 from app.workflows.cache_store import get_state, clear_all_states
 from app.api.webhooks import router as webhook_router
+from app.api.auth import router as auth_router
 from app.analytics.vigigrade import router as vigigrade_router
+from app.api.medicines import router as medicines_router
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging with explicit format and handler
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
@@ -352,6 +358,30 @@ async def admin_clear_all_states():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/cases")
+async def get_all_cases():
+    """
+    Get all pharmacovigilance cases from the database.
+    Used by the dashboard to display the case list.
+    """
+    try:
+        cases_cursor = mongodb_service.db.cases.find().sort("updated_at", -1)
+        cases = await cases_cursor.to_list(length=100)
+        
+        # Convert ObjectId to string for JSON serialization
+        results = []
+        for case in cases:
+            if "_id" in case:
+                case["_id"] = str(case["_id"])
+            results.append(case)
+            
+        return results
+        
+    except Exception as e:
+        logger.error(f"Error retrieving cases: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================
 # Include Additional Routers
 # ============================================
@@ -359,8 +389,18 @@ async def admin_clear_all_states():
 # WhatsApp webhook router (if using WhatsApp Business API)
 app.include_router(webhook_router, tags=["webhooks"])
 
+# Authentication router for employee login
+app.include_router(auth_router)
+
 # VigiGrade analytics router for confidence scoring and signal detection
 app.include_router(vigigrade_router)
+
+# Medicines database router
+app.include_router(medicines_router)
+
+# FAERS Analytics router
+from app.api.analytics import router as analytics_router
+app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["analytics"])
 
 
 # ============================================

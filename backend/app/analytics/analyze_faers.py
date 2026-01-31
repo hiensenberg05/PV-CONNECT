@@ -1,4 +1,5 @@
 
+import os
 import pandas as pd
 import asyncio
 import logging
@@ -16,7 +17,7 @@ async def analyze_faers_data():
     Ingest FAERS Excel data, perform BCPNN analysis, and store results in MongoDB.
     """
     try:
-        file_path = 'app/analytics/faers_random_1000.xlsx'
+        file_path = os.path.join(os.path.dirname(__file__), 'faers_random_1000.xlsx')
         logger.info(f"Reading FAERS data from {file_path}")
         
         # Read Excel

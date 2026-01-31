@@ -20,7 +20,7 @@ const Dashboard = () => {
 
 
     // Fetch analytics data from backend
-    const { statistics, cases, loading, error, refetch } = useAnalytics();
+    const { statistics, cases, faersSignals, faersStats, loading, error, refetch } = useAnalytics();
 
     // Sync cases from backend to local state
     React.useEffect(() => {

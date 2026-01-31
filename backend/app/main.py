@@ -402,6 +402,22 @@ app.include_router(medicines_router)
 from app.api.analytics import router as analytics_router
 app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["analytics"])
 
+# FAERS Data Ingestion Endpoint
+from app.analytics.analyze_faers import analyze_faers_data
+
+@app.post("/api/v1/analytics/ingest-faers")
+async def ingest_faers_data():
+    """
+    Trigger FAERS data ingestion: reads the Excel file, performs BCPNN analysis,
+    and stores results in MongoDB.
+    """
+    try:
+        count = await analyze_faers_data()
+        return {"success": True, "signals_generated": count}
+    except Exception as e:
+        logger.error(f"FAERS ingestion failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ============================================
 # Run Server (for development)

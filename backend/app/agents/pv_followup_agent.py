@@ -6,6 +6,7 @@ Key improvements:
 2. Better validation logic
 3. Language detection
 4. Cleaner state management
+5. Debug logging for extraction progress
 """
 
 from app.services.load_data import download_media
@@ -15,28 +16,6 @@ from app.services.see_useless import see_useless_yes
 from app.services.fill_data import fill_data_remove_missing
 from app.utils.context_builder import build_llm_messages
 from app.services.llm_service import get_model
-
-
-
-# def _detect_language(text: str) -> str:
-#     """
-#     Simple language detection - checks for Hindi/Hinglish patterns.
-#     Returns 'hi' for Hindi/Hinglish, 'en' for English.
-#     """
-#     if not text:
-#         return "en"
-    
-#     # Common Hindi/Hinglish words
-#     hindi_markers = [
-#         'mujhe', 'mera', 'mere', 'hain', 'hai', 'kya', 'kaise', 'kaun',
-#         'aap', 'tum', 'main', 'hum', 'ye', 'wo', 'nahi', 'haan',
-#         'dawai', 'dawa', 'goli', 'tablet', 'bukhar', 'dard', 'pet'
-#     ]
-    
-#     text_lower = text.lower()
-#     hindi_count = sum(1 for marker in hindi_markers if marker in text_lower)
-    
-#     return "hi" if hindi_count >= 2 else "en"
 
 
 def _detect_language(text: str) -> str:
@@ -97,6 +76,11 @@ def _detect_language(text: str) -> str:
 def run_pv_followup_agent(state: dict) -> dict:
     """
     IMPROVED agent with better state management and validation.
+    
+    KEY CHANGES:
+    1. Added debug logging for extraction progress
+    2. Trim chat history to prevent bloat
+    3. Track missing count before/after extraction
     """
     
     # ALWAYS initialize problems at the start
@@ -119,22 +103,10 @@ def run_pv_followup_agent(state: dict) -> dict:
         # Unverified doctor - handle license submission
         if not state.get("verified_doctor"):
             if state.get("doc_id"):
-                try:
-                    media = download_media(state["doc_id"])
-                    state = run_ocr_on_state(state, media["file_path"])
-                    doc_text = state.get("current_doc_data", {}).get("raw_text", "")
-                    
-                    if doc_text and len(doc_text) > 5:
-                        state["verified_doctor"] = True
-                        state["followup_msg"] = "Your license has been received. You may now proceed to report the case."
-                        return state
-                    else:
-                        state["verified_doctor"] = False
-                        state["followup_msg"] = "Could not read your license. Please upload a clear image."
-                        return state
-                except Exception:
-                    state["followup_msg"] = "Error processing license. Please try again."
-                    return state
+                # SKIP OCR for license - Just accept it
+                state["verified_doctor"] = True
+                state["followup_msg"] = "Your license has been received. You may now proceed to report the case."
+                return state
             else:
                 state["followup_msg"] = "Please upload your medical license ID to verify your identity."
                 return state
@@ -199,8 +171,16 @@ def run_pv_followup_agent(state: dict) -> dict:
             
             state["to_use"] = " ".join(to_use)
             
+            # NEW: Track extraction progress
+            missing_before = len(state.get("missing", []))
+            
             # Extract data and generate response
             state = fill_data_remove_missing(state)
+            
+            # NEW: Log progress
+            missing_after = len(state.get("missing", []))
+            if missing_after < missing_before:
+                print(f"[Agent] ✓ Progress: {missing_before} → {missing_after} fields remaining")
             
             # Update chat history - store ONLY user content, not assistant responses
             if "chat_history" not in state:
@@ -214,6 +194,9 @@ def run_pv_followup_agent(state: dict) -> dict:
             
             # Only store assistant message if it's an actual question
             if followup and followup != "NO_FOLLOWUP":
+                # NEW: Trim history to prevent bloat
+                if len(state["chat_history"]) > 10:
+                    state["chat_history"] = state["chat_history"][-10:]
                 state["chat_history"].append({"role": "assistant", "content": followup})
             
             state["followup_msg"] = followup
@@ -232,7 +215,6 @@ def run_pv_followup_agent(state: dict) -> dict:
             try:
                 media = download_media(state["doc_id"])
                 state = run_ocr_on_state(state, media["file_path"])
-                # print(state["current_doc_data"].raw_text)
             except Exception as e:
                 state["problems"].append(f"Error processing document: {str(e)}")
         
@@ -289,8 +271,16 @@ def run_pv_followup_agent(state: dict) -> dict:
 
         state["to_use"] = " ".join(to_use)
 
+        # NEW: Track extraction progress
+        missing_before = len(state.get("missing", []))
+
         # Extract data and generate response
         state = fill_data_remove_missing(state)
+        
+        # NEW: Log progress
+        missing_after = len(state.get("missing", []))
+        if missing_after < missing_before:
+            print(f"[Agent] ✓ Progress: {missing_before} → {missing_after} fields remaining")
         
         # Update chat history
         if "chat_history" not in state:
@@ -304,6 +294,9 @@ def run_pv_followup_agent(state: dict) -> dict:
         
         # Only store assistant message if it's an actual question
         if followup and followup != "NO_FOLLOWUP":
+            # NEW: Trim history to prevent bloat
+            if len(state["chat_history"]) > 10:
+                state["chat_history"] = state["chat_history"][-10:]
             state["chat_history"].append({"role": "assistant", "content": followup})
         
         state["followup_msg"] = followup

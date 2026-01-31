@@ -103,6 +103,7 @@ async def process_message(
     # Step 1b: Check for exit command
     if state and is_exit_request(text_content or ""):
         case_id = state.get("case_id", "N/A")
+        print(f"[EXIT] User requested exit for Case {case_id}. Performing FINAL SAVE.")
         # Save state before exit
         print(f"[Exit] User exited. Saving case {case_id} to DB...")
         await save_state(state)
@@ -322,6 +323,14 @@ async def process_message(
         import traceback
         print(f"[keep_workflow] Agent error: {str(e)}")
         traceback.print_exc()
+        
+        # SAFETY NET: Try to save whatever state we have before returning error
+        try:
+            print("[keep_workflow] Attempting emergency save during error...")
+            await save_state(state)
+        except Exception as save_err:
+            print(f"[keep_workflow] Emergency save failed: {str(save_err)}")
+
         # Return a safe fallback
         return {
             "reply": "Sorry, there was an error processing your message. Please try again.",

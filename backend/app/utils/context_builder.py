@@ -268,10 +268,26 @@ def build_llm_messages(state: dict) -> str:
     # Case complete check
     if not all_missing:
         state["case_complete"] = True
+        case_id = state.get("case_id", "N/A")
         if user_type == "patient":
-            return "धन्यवाद! सभी जानकारी मिल गई है। आपका केस सफलतापूर्वक सेव हो गया है।" if LANGUAGE == "hi" else "Thank you! All information received. Your case has been saved successfully."
+            return (
+                f"🎉 *धन्यवाद!* सभी जानकारी मिल गई है।\n\n"
+                f"📋 *आपका Case ID:*\n`{case_id}`\n\n"
+                f"✅ Case सफलतापूर्वक सेव हो गया है।\n\n"
+                f"💾 Iss Case ID ko save karke rakhein - iske zariye aap baad mein apna case resume kar sakte hain।"
+            ) if LANGUAGE == "hi" else (
+                f"🎉 *Thank you!* All information received.\n\n"
+                f"📋 *Your Case ID:*\n`{case_id}`\n\n"
+                f"✅ Case saved successfully.\n\n"
+                f"💾 Save this Case ID - you can use it to resume your case later."
+            )
         else:
-            return "Thank you. All required clinical information has been collected. Case submitted successfully."
+            return (
+                f"✅ *Case Complete*\n\n"
+                f"All required clinical information has been collected.\n\n"
+                f"📋 *Case ID:* `{case_id}`\n\n"
+                f"Case submitted successfully to the PV system."
+            )
 
     # NEW: Get ordered missing fields using sections
     target_missing = _get_current_section_missing(state)

@@ -141,8 +141,25 @@ logs/
 cloudinary_upload.json
 
 # Test files
-
-
+test_*.py
+*_test.py
+tests/
+**/tests/
+**/__tests__/
+*.test.js
+*.test.jsx
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.jsx
+*.spec.ts
+*.spec.tsx
+coverage/
+.nyc_output/
+jest.config.*
+pytest.ini
+conftest.py
+test_main.py
 
 .pytest_cache/
 

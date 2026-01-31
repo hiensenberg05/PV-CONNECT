@@ -31,6 +31,22 @@ def safe_int(value: Any) -> Optional[int]:
     return None
 
 
+def safe_bool(value: Any) -> Optional[bool]:
+    """Safely convert value to bool. Returns None if not possible."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        val = value.lower().strip()
+        if val in ("true", "yes", "1", "haan", "ha", "y"):
+            return True
+        if val in ("false", "no", "0", "nahi", "n"):
+            return False
+        return None
+    return None
+
+
 def convert_state_to_case(state: Dict[str, Any]) -> Case:
     """
     Convert conversation state (extracted_data) to Case format.
@@ -56,14 +72,14 @@ def convert_state_to_case(state: Dict[str, Any]) -> Case:
         stop_date=extracted.get("medicine_stop_date"),
         reason_for_medicine=extracted.get("reason_for_medicine"),
         advised_by=extracted.get("medicine_advised_by"),
-        self_medicated=extracted.get("self_medicated")
+        self_medicated=safe_bool(extracted.get("self_medicated"))
     )
     medicine_details = [medicine] if medicine.name else []
 
-    # Build reaction details
+    # Build reaction details with safe type conversion
     reaction_details = ReactionDetails(
         start_date=extracted.get("side_effect_start_date"),
-        continuing=extracted.get("side_effect_continuing"),
+        continuing=safe_bool(extracted.get("side_effect_continuing")),
         stop_date=extracted.get("side_effect_stop_date")
     )
 

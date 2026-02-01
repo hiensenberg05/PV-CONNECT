@@ -419,6 +419,7 @@ Once the backend is running, access the interactive API docs:
    - Ensure audio format is supported
 
 ---
+[![YouTube Demo](https://img.shields.io/badge/YouTube-Demo-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=gkWA8-Iturk)
 
 ## 📄 License
 
@@ -429,6 +430,7 @@ This project is licensed under the MIT License.
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
 
 ---
 

@@ -223,40 +223,45 @@ async def process_message(
             verification = await verify_doctor_by_phone(phone_number)
 
             if verification["is_verified"]:
-                # Pre-verified doctor in DB
+                # Pre-verified doctor in DB (approved by admin)
                 state["verified_doctor"] = True
                 state["human_verified"] = True
                 # Store doctor info from DB
                 if verification["doctor_data"]:
                     state["doctor_name"] = verification["doctor_data"].get("name")
                     state["doctor_id"] = verification["doctor_data"].get("doctor_id")
+                print(f"[Doctor] Pre-verified doctor: {phone_number}")
 
-            elif verification["exists"] and not verification["is_verified"]:
-                # Doctor in DB but not yet verified - allow chat, pending human review
-                state["verified_doctor"] = True
-                state["human_verified"] = False
-                if verification["doctor_data"]:
-                    state["doctor_name"] = verification["doctor_data"].get("name")
-                    state["doctor_id"] = verification["doctor_data"].get("doctor_id")
-
-            elif doc_id and not state.get("license_id"):
-                # New doctor sent license image - add to DB as pending
+            elif doc_id:
+                # Doctor uploaded license image - process it
                 state["license_id"] = doc_id
-                try:
-                    doctor_id = await add_doctor_pending_verification(
-                        phone_number=phone_number,
-                        license_id=doc_id
-                    )
-                    state["doctor_id"] = doctor_id
-                    state["verified_doctor"] = True  # Allow chat to continue
-                    state["human_verified"] = False  # Pending human review
-                except Exception as e:
-                    # If doctor registration fails, ask to try again
-                    set_state(phone_number, state)
-                    return {
-                        "reply": "Error registering license. Please try uploading again.",
-                        "state": state
-                    }
+                
+                if verification["exists"]:
+                    # Doctor already in DB (pending) - just update and approve
+                    state["verified_doctor"] = True
+                    state["human_verified"] = False
+                    if verification["doctor_data"]:
+                        state["doctor_name"] = verification["doctor_data"].get("name")
+                        state["doctor_id"] = verification["doctor_data"].get("doctor_id")
+                    print(f"[Doctor] Existing pending doctor uploaded license: {phone_number}")
+                else:
+                    # New doctor - add to DB as pending
+                    try:
+                        doctor_id = await add_doctor_pending_verification(
+                            phone_number=phone_number,
+                            license_id=doc_id
+                        )
+                        state["doctor_id"] = doctor_id
+                        state["verified_doctor"] = True  # Allow chat to continue
+                        state["human_verified"] = False  # Pending human review
+                        print(f"[Doctor] New doctor registered: {doctor_id}")
+                    except Exception as e:
+                        # If doctor registration fails, ask to try again
+                        set_state(phone_number, state)
+                        return {
+                            "reply": "Error registering license. Please try uploading again.",
+                            "state": state
+                        }
 
             elif state.get("verification_id"):
                 # Check if async verification completed
@@ -266,10 +271,11 @@ async def process_message(
                     state["verified_doctor"] = True
 
             else:
-                # No verification path matched - ask for license
+                # No license uploaded yet - ask for it
+                print(f"[Doctor] Asking for license: {phone_number}")
                 set_state(phone_number, state)
                 return {
-                    "reply": "Please upload your medical license ID to verify your identity.",
+                    "reply": "Please upload your medical license ID to verify your identity. 📋",
                     "state": state
                 }
 

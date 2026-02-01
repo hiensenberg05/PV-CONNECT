@@ -44,22 +44,9 @@ DEFAULT_EXTRACTED_DATA = {
 
 # CRITICAL: Section-based field grouping
 # This ensures we ask for ONE section at a time, preventing LLM confusion
+# NOTE: Prescription (medicine) asked FIRST to leverage OCR extraction
 SECTIONS_ORDER = [
-    # Section 1: Patient Demographics
-    [
-        "patient_name",
-        "patient_gender",
-        "patient_age_value",
-        "patient_age_unit"
-    ],
-    # Section 2: Health Background
-    [
-        "reason_for_medicine",
-        "medicine_advised_by",
-        "self_medicated",
-        "past_disease_history"
-    ],
-    # Section 3: Medicine Details
+    # Section 1: Medicine Details (ASK FIRST - OCR can extract patient info from prescription)
     [
         "medicine_name",
         "medicine_quantity_taken",
@@ -68,11 +55,26 @@ SECTIONS_ORDER = [
         "medicine_start_date",
         "medicine_stop_date"
     ],
-    # Section 4: Side Effect Timeline
+    # Section 2: Patient Demographics (often extracted from prescription)
     [
+        "patient_name",
+        "patient_gender",
+        "patient_age_value",
+        "patient_age_unit"
+    ],
+    # Section 3: Side Effect Details (the main report)
+    [
+        "side_effect_description",
         "side_effect_start_date",
         "side_effect_continuing",
         "side_effect_stop_date"
+    ],
+    # Section 4: Health Background
+    [
+        "reason_for_medicine",
+        "medicine_advised_by",
+        "self_medicated",
+        "past_disease_history"
     ],
     # Section 5: Severity Assessment
     [
@@ -82,25 +84,16 @@ SECTIONS_ORDER = [
         "severity_death",
         "severity_other"
     ],
-    # Section 6: Clinical Details
+    # Section 6: Management
     [
-        "side_effect_description",
         "management_action_taken"
     ]
 ]
 
 # Default missing list (all keys that need to be collected)
+# Order matches SECTIONS_ORDER for consistency
 DEFAULT_MISSING = [
-    "patient_name",
-    "patient_gender",
-    "patient_age_value",
-    "patient_age_unit",
-
-    "reason_for_medicine",
-    "medicine_advised_by",
-    "self_medicated",
-    "past_disease_history",
-
+    # Section 1: Medicine Details (FIRST)
     "medicine_name",
     "medicine_quantity_taken",
     "medicine_dosage_form",
@@ -108,17 +101,32 @@ DEFAULT_MISSING = [
     "medicine_start_date",
     "medicine_stop_date",
 
+    # Section 2: Patient Demographics
+    "patient_name",
+    "patient_gender",
+    "patient_age_value",
+    "patient_age_unit",
+
+    # Section 3: Side Effect Details
+    "side_effect_description",
     "side_effect_start_date",
     "side_effect_continuing",
     "side_effect_stop_date",
 
+    # Section 4: Health Background
+    "reason_for_medicine",
+    "medicine_advised_by",
+    "self_medicated",
+    "past_disease_history",
+
+    # Section 5: Severity Assessment
     "severity_no_daily_activity_effect",
     "severity_affected_daily_activity",
     "severity_hospitalized",
     "severity_death",
     "severity_other",
 
-    "side_effect_description",
+    # Section 6: Management
     "management_action_taken"
 ]
 

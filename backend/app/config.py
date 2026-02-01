@@ -5,10 +5,14 @@ Loads environment variables and provides typed settings.
 """
 
 import os
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from the project root (parent of backend folder)
+root_dir = Path(__file__).resolve().parent.parent.parent  # app/config.py -> backend -> PV-CONNECT
+env_path = root_dir / ".env"
+load_dotenv(dotenv_path=env_path)
 
 
 class Settings(BaseSettings):
@@ -36,6 +40,8 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    ASSEMBLY_API_KEY: str = os.getenv("ASSEMBLY_API_KEY", "")
     
     # WhatsApp (if using WhatsApp Business API)
     WHATSAPP_PHONE_NUMBER_ID: str = os.getenv("WHATSAPP_PHONE_NUMBER_ID", "")

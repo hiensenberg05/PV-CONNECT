@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { BarChart3, PieChart as PieChartIcon, TrendingUp, Activity, AlertTriangle, Clock, CheckSquare } from 'lucide-react';
 import useThemeStore from '../store/themeStore';
 
-const AnalyticsView = ({ caseReports = [], faersSignals = [], faersStats = null }) => {
+const AnalyticsView = ({ caseReports = [] }) => {
     const { darkMode } = useThemeStore();
 
     // Theme colors
@@ -367,51 +367,6 @@ const AnalyticsView = ({ caseReports = [], faersSignals = [], faersStats = null 
                     )}
                 </ChartCard>
             </div>
-
-            {/* FAERS Signals Section */}
-            {faersSignals.length > 0 && (
-                <div className="mt-8">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Activity className="w-5 h-5" style={{ color: '#073d44' }} />
-                        <h3 className="text-xl font-bold" style={{ color: theme.text }}>Potential Signals (FAERS BCPNN Analysis)</h3>
-                    </div>
-
-                    <div className="rounded-lg overflow-hidden border" style={{ borderColor: theme.border }}>
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs uppercase" style={{ backgroundColor: theme.bg, color: theme.textSecondary }}>
-                                <tr>
-                                    <th className="px-6 py-3 font-semibold">Suspect Product</th>
-                                    <th className="px-6 py-3 font-semibold">Adverse Event</th>
-                                    <th className="px-6 py-3 font-semibold">Observed / Expected</th>
-                                    <th className="px-6 py-3 font-semibold">IC Score</th>
-                                    <th className="px-6 py-3 font-semibold">Signal Strength</th>
-                                </tr>
-                            </thead>
-                            <tbody style={{ backgroundColor: theme.bg }}>
-                                {faersSignals.map((signal, index) => (
-                                    <tr key={index} className="border-b last:border-0" style={{ borderColor: theme.border, color: theme.text }}>
-                                        <td className="px-6 py-4 font-medium">{signal?.drug || 'Unknown'}</td>
-                                        <td className="px-6 py-4">{signal?.event || 'Unknown'}</td>
-                                        <td className="px-6 py-4">
-                                            {signal?.count || 0} / {signal?.expected_count || 0}
-                                        </td>
-                                        <td className="px-6 py-4 font-mono">
-                                            {typeof signal?.ic === 'number' ? signal.ic.toFixed(3) : 'N/A'}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${(signal?.ic || 0) > 3.0 ? 'bg-red-100 text-red-800' :
-                                                    (signal?.ic || 0) > 1.0 ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'
-                                                }`}>
-                                                {signal?.signal_strength || ((signal?.ic || 0) > 3.0 ? 'Very Strong' : (signal?.ic || 0) > 1.0 ? 'Strong' : 'Moderate')}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

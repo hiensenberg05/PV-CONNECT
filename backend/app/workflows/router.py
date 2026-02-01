@@ -10,7 +10,7 @@ from app.services.convert_lang_msg import convert_to_language
 
 
 # Exact keywords for matching (lowercase)
-PATIENT_KEYWORDS = ["patient", "mareez", "bimar", "मरीज", "पेशेंट", "1"]
+PATIENT_KEYWORDS = ["patient", "mareez", "bimar", "मरीज", "पेशेंट", "1","१"]
 DOCTOR_KEYWORDS = ["doctor", "dr", "physician", "डॉक्टर", "चिकित्सक", "2"]
 NEW_CASE_KEYWORDS = ["new", "no", "nahi", "naya", "start", "fresh", "नया", "नहीं", "3"]
 EXIT_KEYWORDS = ["exit", "quit", "bye", "stop", "end", "band", "बंद", "निकलना"]

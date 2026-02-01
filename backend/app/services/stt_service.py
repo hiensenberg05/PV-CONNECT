@@ -1,7 +1,7 @@
 import assemblyai as aai
-import os
-from dotenv import load_dotenv
-load_dotenv()  # reads .env in cwd or project root
+
+# Import centralized settings (handles .env loading)
+from app.config import settings
 
 
 def transcribe_audio(file_bytes: bytes) -> str:
@@ -10,10 +10,9 @@ def transcribe_audio(file_bytes: bytes) -> str:
     Returns the transcript text.
     """
     try:
-        # Support both env var names (some libraries expect ASSEMBLYAI_API_KEY)
-        api_key = os.getenv("ASSEMBLYAI_API_KEY") or os.getenv("ASSEMBLY_API_KEY")
+        api_key = settings.ASSEMBLY_API_KEY
         if not api_key:
-            print("STT Warning: No AssemblyAI API key found in ASSEMBLYAI_API_KEY or ASSEMBLY_API_KEY. Skipping transcription.")
+            print("STT Warning: No AssemblyAI API key found. Skipping transcription.")
             return ""
 
         aai.settings.api_key = api_key

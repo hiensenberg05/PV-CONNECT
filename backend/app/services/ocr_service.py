@@ -2,12 +2,12 @@ import os
 from google import genai
 from google.genai import types
 
-from dotenv import load_dotenv
+# Import centralized settings (handles .env loading)
+from app.config import settings
 
-load_dotenv()
-
-# Initialize client with the new library
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# Initialize client with the API key from settings
+api_key = settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY
+client = genai.Client(api_key=api_key) if api_key else None
 
 import json
 import re

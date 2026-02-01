@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getStatistics, getCases, getFaersSignals, getFaersStats } from '../api/analytics';
+import { getStatistics, getCases, getFaersSignals, getFaersStats, batchUpdateScores } from '../api/analytics';
 
 /**
- * Custom hook for fetching analytics data from the backend
- * @returns {Object} - { statistics, cases, loading, error, refetch }
+ * Custom hook for analytics data - fetches from backend API
+ * @returns {Object} - { statistics, cases, faersSignals, faersStats, loading, error, refetch, updateScores }
  */
 const useAnalytics = () => {
     const [statistics, setStatistics] = useState(null);
@@ -18,34 +18,46 @@ const useAnalytics = () => {
         setError(null);
 
         try {
-            // Trigger batch update first (optional, keep if needed)
-            try {
-                await import('../api/analytics').then(module => module.batchUpdateScores());
-            } catch (e) {
-                console.warn('Auto-analytics trigger failed:', e);
-            }
-
             // Fetch all data in parallel
-            const [statsResult, casesResult, faersSignalsResult, faersStatsResult] = await Promise.allSettled([
+            const results = await Promise.allSettled([
                 getStatistics(),
                 getCases(),
                 getFaersSignals(),
                 getFaersStats()
             ]);
 
-            if (statsResult.status === 'fulfilled') setStatistics(statsResult.value);
-            if (casesResult.status === 'fulfilled') setCases(casesResult.value || []);
-
-            if (faersSignalsResult.status === 'fulfilled') {
-                setFaersSignals(faersSignalsResult.value || []);
+            // Handle statistics
+            if (results[0].status === 'fulfilled') {
+                setStatistics(results[0].value);
             } else {
-                console.warn('Failed to fetch FAERS signals:', faersSignalsResult.reason);
+                console.warn('Failed to fetch statistics:', results[0].reason);
             }
 
-            if (faersStatsResult.status === 'fulfilled') {
-                setFaersStats(faersStatsResult.value);
+            // Handle cases
+            if (results[1].status === 'fulfilled') {
+                setCases(results[1].value || []);
             } else {
-                console.warn('Failed to fetch FAERS stats:', faersStatsResult.reason);
+                console.warn('Failed to fetch cases:', results[1].reason);
+            }
+
+            // Handle FAERS signals
+            if (results[2].status === 'fulfilled') {
+                setFaersSignals(results[2].value || []);
+            } else {
+                console.warn('Failed to fetch FAERS signals:', results[2].reason);
+            }
+
+            // Handle FAERS stats
+            if (results[3].status === 'fulfilled') {
+                setFaersStats(results[3].value);
+            } else {
+                console.warn('Failed to fetch FAERS stats:', results[3].reason);
+            }
+
+            // Check if all requests failed
+            const allFailed = results.every(r => r.status === 'rejected');
+            if (allFailed) {
+                setError('Failed to fetch analytics data. Please check your connection.');
             }
 
         } catch (err) {
@@ -55,6 +67,18 @@ const useAnalytics = () => {
             setLoading(false);
         }
     }, []);
+
+    const updateScores = useCallback(async (caseIds = null) => {
+        try {
+            const result = await batchUpdateScores(caseIds);
+            // Refetch data after update
+            await fetchData();
+            return result;
+        } catch (err) {
+            console.error('Score update error:', err);
+            throw err;
+        }
+    }, [fetchData]);
 
     useEffect(() => {
         fetchData();
@@ -67,7 +91,8 @@ const useAnalytics = () => {
         faersStats,
         loading,
         error,
-        refetch: fetchData
+        refetch: fetchData,
+        updateScores
     };
 };
 

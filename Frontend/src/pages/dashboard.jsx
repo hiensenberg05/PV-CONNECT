@@ -4,6 +4,7 @@ import AddCaseReportModal from '../components/AddCaseReportModal';
 import CaseDetailsModal from '../components/CaseDetailsModal';
 import MedicinesTable from '../components/MedicinesTable';
 import AnalyticsView from '../components/AnalyticsView';
+import SignalDetectionView from '../components/SignalDetectionView';
 import Sidebar from '../components/Sidebar';
 import useThemeStore from '../store/themeStore';
 import useAnalytics from '../hooks/useAnalytics';
@@ -414,6 +415,12 @@ const Dashboard = () => {
                     {activeView === 'analytics' && (
                         <AnalyticsView
                             caseReports={caseReports}
+                        />
+                    )}
+
+                    {/* Signal Detection Section */}
+                    {activeView === 'signals' && (
+                        <SignalDetectionView
                             faersSignals={faersSignals}
                             faersStats={faersStats}
                         />

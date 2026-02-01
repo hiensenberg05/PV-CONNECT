@@ -103,15 +103,16 @@ const Sidebar = ({ activeView = 'dashboard', onViewChange }) => {
                     {['Case Reports', 'Signal Detection', 'Safety Reports', 'Analytics', 'AI Insights'].map((item, idx) => {
                         const icons = [FileText, Activity, Shield, BarChart3, Zap];
                         const Icon = icons[idx];
-                        const isAnalytics = item === 'Analytics';
-                        const viewKey = isAnalytics ? 'analytics' : null;
+                        const viewKeys = { 'Analytics': 'analytics', 'Signal Detection': 'signals' };
+                        const viewKey = viewKeys[item] || null;
+                        const isClickable = viewKey !== null;
 
                         return (
                             <div
                                 key={item}
-                                onClick={() => isAnalytics && handleNavClick('analytics')}
+                                onClick={() => isClickable && handleNavClick(viewKey)}
                                 className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors"
-                                style={isAnalytics ? getNavItemStyle('analytics') : { color: darkMode ? '#d1d5db' : '#4b5563' }}
+                                style={isClickable ? getNavItemStyle(viewKey) : { color: darkMode ? '#d1d5db' : '#4b5563' }}
                                 onMouseEnter={(e) => !isActive(viewKey) && (e.currentTarget.style.backgroundColor = darkMode ? '#374151' : '#f3f4f6')}
                                 onMouseLeave={(e) => !isActive(viewKey) && (e.currentTarget.style.backgroundColor = 'transparent')}
                             >

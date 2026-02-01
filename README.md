@@ -1,4 +1,4 @@
-# PV-CONNECT
+# NOVA
 
 <p align="center">
   <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
 </p>
 
-**PV-CONNECT** is a Pharmacovigilance (PV) reporting system that enables patients and healthcare providers to report adverse drug reactions (ADRs) via WhatsApp. The system uses AI-powered data extraction and BCPNN signal detection for drug safety analytics.
+**NOVA** is a Pharmacovigilance (PV) reporting system that enables patients and healthcare providers to report adverse drug reactions (ADRs) via WhatsApp. The system uses AI-powered data extraction and BCPNN signal detection for drug safety analytics.
 
 ---
 
